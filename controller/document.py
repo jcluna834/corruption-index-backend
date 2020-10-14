@@ -9,6 +9,7 @@ from service.plag_dao import PlagiarismDAO
 from util.constants.error_codes import HttpErrorCode
 from util.error_handlers.exceptions import ExceptionBuilder, BadRequest
 
+
 class Document(BaseController):
     plag_dao: PlagiarismDAO = inject(PlagiarismDAO)
 
@@ -37,7 +38,7 @@ class Document(BaseController):
         :return:
         """
         res = self.plag_dao.get_docs(page=int(request.args.get("page", 1)),
-                                    per_page=int(request.args.get("per_page", 10)), all='all' in request.args)
+                                     per_page=int(request.args.get("per_page", 10)), all='all' in request.args)
         docs_info = dict(data=[d.to_dict() for d in res['data']], count=res['count'])
         print(docs_info)
         return Response(data=docs_info)

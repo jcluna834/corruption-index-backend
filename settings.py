@@ -8,15 +8,16 @@ __basedir__ = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 
+
 # Ideally, there will be one config class per environment(dev, qa, uat, prod)
 class __Config__(object):
     MYSQL_DB_CONFIG = {
         'URI_CONFIG': {
-            'database': os.environ['MYSQL_DB_NAME'],
-            'host': os.environ['MYSQL_DB_HOST'],
-            'username': os.environ['MYSQL_DB_USERNAME'],
-            'password': os.environ['MYSQL_DB_PASSWORD'],
-            'port': os.environ['MYSQL_DB_PORT']
+            'database': 'plagiarism_detection',
+            'host': 'localhost',
+            'username': 'root',
+            'password': '',
+            'port': '3306'
         },
         'MYSQL_CONNECTION_POOL_SIZE': os.environ.get('MYSQL_CONNECTION_POOL_SIZE', 5)
     }
@@ -24,6 +25,7 @@ class __Config__(object):
     LOGGING = {
         'LEVEL': 'INFO'
     }
+
 
 app.config.from_object(__Config__)
 config = app.config

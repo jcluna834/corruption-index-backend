@@ -1,16 +1,20 @@
 __author__ = "Suyash Soni"
 __email__ = "suyash.soni248@gmail.com"
 
-from model import Document
-import nltk, string
-from sklearn.feature_extraction.text import TfidfVectorizer
-from util.injector import inject
-from service.base import BaseService
-from service.plag_dao import PlagiarismDAO
 from typing import List, Dict
 
-class PlagiarismDetector(BaseService):
+import nltk
+#nltk.download('punkt')
+import string
+from sklearn.feature_extraction.text import TfidfVectorizer
 
+from model import Document
+from service.base import BaseService
+from service.plag_dao import PlagiarismDAO
+from util.injector import inject
+
+
+class PlagiarismDetector(BaseService):
     plag_dao: PlagiarismDAO = inject(PlagiarismDAO)
     vectorizer = None
 
@@ -45,7 +49,8 @@ class PlagiarismDetector(BaseService):
         :param input_doc:
         :return:
         """
-        vectorizer = self.vectorizer or TfidfVectorizer(tokenizer=PlagiarismDetector.tokenize_and_stem, stop_words='english')
+        vectorizer = self.vectorizer or TfidfVectorizer(tokenizer=PlagiarismDetector.tokenize_and_stem,
+                                                        stop_words='english')
         tfidf = vectorizer.fit_transform([source_doc, input_doc])
         return ((tfidf * tfidf.T).A)[0, 1]
 

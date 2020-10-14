@@ -4,6 +4,7 @@ __email__ = "suyash.soni248@gmail.com"
 from flask_restful import Resource
 from util.injector import Injectable, inject
 
+
 class BaseController(Resource):
     """
     Every controller must extend this class.
@@ -20,5 +21,7 @@ class BaseController(Resource):
             service_obj = self.service
         """
         if self.__service_class__ is None:
-            raise NotImplementedError("Controller {} must override '__service_class__' property".format(self.__class__.__name__))
-        return self.__service_class__.inject if isinstance(self.__service_class__, (Injectable)) else self.__service_class__
+            raise NotImplementedError(
+                "Controller {} must override '__service_class__' property".format(self.__class__.__name__))
+        return self.__service_class__.inject if isinstance(self.__service_class__,
+                                                           (Injectable)) else self.__service_class__

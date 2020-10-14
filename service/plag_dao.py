@@ -5,6 +5,7 @@ from service.base import BaseService
 from model import Document
 from math import ceil
 
+
 class PlagiarismDAO(BaseService):
 
     def yield_docs(self, page=1, per_page=10):
@@ -18,7 +19,7 @@ class PlagiarismDAO(BaseService):
         iterations = ceil(docs['count'] / per_page)
 
         yield docs
-        for _page in range(page+1, iterations+1):
+        for _page in range(page + 1, iterations + 1):
             docs = self.get_docs(page=_page, per_page=per_page)
             yield docs
 

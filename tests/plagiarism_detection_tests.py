@@ -10,6 +10,7 @@ import json
 import requests
 from uuid import uuid4
 
+
 class TestPlagiarismDetection(unittest.TestCase):
 
     def setUp(self):
@@ -55,7 +56,9 @@ class TestPlagiarismDetection(unittest.TestCase):
 
     def test_5_similar_docs(self):
         sim_score = self.plag_detector.cosine_similarity('bird parrot', 'cockatiel bird')
-        self.assertGreater(sim_score, 0, msg='These 2 strings are similar with similarity score of {}.'.format(sim_score))
+        self.assertGreater(sim_score, 0,
+                           msg='These 2 strings are similar with similarity score of {}.'.format(sim_score))
+
 
 if __name__ == '__main__':
     unittest.main()

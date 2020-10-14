@@ -7,6 +7,7 @@ from settings import config
 from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import ColumnProperty
 
+
 def generate_uuid():
     """
     :return: Random UUID4 String.

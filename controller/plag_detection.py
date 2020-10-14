@@ -10,6 +10,7 @@ from typing import Dict
 from util.constants.error_codes import HttpErrorCode
 from util.error_handlers.exceptions import ExceptionBuilder, BadRequest
 
+
 class PlagiarismDetection(BaseController):
     plag_detector: PlagiarismDetector = inject(PlagiarismDetector)
 

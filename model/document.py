@@ -5,6 +5,7 @@ import json
 from model.base import BaseModel
 from mysql_connector import db
 
+
 class Document(BaseModel):
     __tablename__ = 'documents'
 
