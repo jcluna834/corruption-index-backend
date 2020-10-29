@@ -9,7 +9,6 @@ from elasticapm.contrib.starlette import ElasticAPM, make_apm_client
 from controller.base import BaseController
 from fastapi.encoders import jsonable_encoder
 from util.injector import inject
-from service.plag_dao import PlagiarismDAO
 
 
 class ElasticSearchFunction(BaseController):
@@ -30,6 +29,12 @@ class ElasticSearchFunction(BaseController):
     # Informa el estado del nodo ElasticSearch
     async def index(self):
         return await self.es.cluster.health()
+
+    # Realiza una búsqueda por contenido retornando elrimer elemento de la misma
+    def searchByContent(self, query):
+        return self.es.search(
+            index="documentos", body={"from": 0, "size": 1, "query": {"match": {"content": query}}}
+        )
 
     # Realiza una búsqueda
     async def search(self, query):
