@@ -8,15 +8,18 @@ from util.injector import inject
 from service.plag_dao import PlagiarismDAO
 from util.constants.error_codes import HttpErrorCode
 from util.error_handlers.exceptions import ExceptionBuilder, BadRequest
+from controller import elasticsearch
+import json
+
 
 
 class Document(BaseController):
     plag_dao: PlagiarismDAO = inject(PlagiarismDAO)
+    elasticsearhobj = elasticsearch.ElasticSearchFunction()
 
     @intercept()
     def post(self, *args, **kwargs):
         """Adds a new document to repo"""
-
         data = request.get_json(force=True)
 
         content = data.get('content', '')
@@ -25,7 +28,10 @@ class Document(BaseController):
         author = data.get('author', '')
 
         if content and title:
+            # Se agrega el documento en la BD
             doc = self.plag_dao.create_doc(content, title, description=description, author=author)
+            #Se agrega el documento al índice en elasticsearh
+            self.elasticsearhobj.add(doc.to_dict_es())
         else:
             ExceptionBuilder(BadRequest).error(HttpErrorCode.REQUIRED_FIELD, 'content', 'title').throw()
 

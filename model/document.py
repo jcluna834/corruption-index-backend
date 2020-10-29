@@ -34,3 +34,15 @@ class Document(BaseModel):
             'description': self.description,
             'content': self.content
         }
+
+    def to_dict_es(self, *args, **kwargs):
+        return {
+            'id': self.id,
+            'created_date': self.created_date,
+            'updated_date': self.updated_date,
+            'title': self.title,
+            'author': self.author,
+            'description': self.description,
+            'content': self.content,
+            'is_deleted': self.is_deleted
+        }

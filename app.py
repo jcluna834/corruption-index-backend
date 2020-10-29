@@ -1,10 +1,13 @@
 __author__ = "Suyash Soni"
 __email__ = "suyash.soni248@gmail.com"
 
-import json, logging
+import json
+import logging
+
 from flask_restful import Api
-from settings import app, config
+
 from mysql_connector import db
+from settings import app, config
 from util.logger import Logger
 
 app.url_map.strict_slashes = False
