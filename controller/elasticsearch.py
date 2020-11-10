@@ -48,7 +48,8 @@ class ElasticSearchFunction(BaseController):
                     "fields": {
                         "content": {
                             "fragment_size": 200,
-                            "number_of_fragments": 1
+                            "number_of_fragments": 2,
+                            "order": "score"
                         }
                     }
                 }
