@@ -33,7 +33,26 @@ class ElasticSearchFunction(BaseController):
     # Realiza una búsqueda por contenido retornando elrimer elemento de la misma
     def searchByContent(self, query):
         return self.es.search(
-            index="documentos", body={"from": 0, "size": 1, "query": {"match": {"content": query}}}
+            index="documentos",
+            body={
+                "from": 0, "size": 1,
+                "query": {
+                    "match": {"content": query}
+                },
+                "_source": {
+                    "includes": ["id", "author", "title", "description"]
+                },
+                "highlight": {
+                    "pre_tags": [""],
+                    "post_tags": [""],
+                    "fields": {
+                        "content": {
+                            "fragment_size": 200,
+                            "number_of_fragments": 1
+                        }
+                    }
+                }
+            }
         )
 
     # Realiza una búsqueda
