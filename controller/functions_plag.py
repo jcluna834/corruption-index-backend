@@ -6,6 +6,8 @@ __email__ = "jcluna@unicauca.edu.co"
 from controller.base import BaseController
 import pylev
 from difflib import SequenceMatcher
+import re
+
 
 class FunctionsPlagiarism(BaseController):
 
@@ -23,3 +25,7 @@ class FunctionsPlagiarism(BaseController):
     def getUncommonWords(self, a, b):
         un_comm = [i for i in "".join(b).split() if i not in "".join(a).split()]
         return un_comm
+
+    # Retorna una cadena de texto limpia, sin caracteres especiales
+    def getStringClean(self, string):
+        return re.sub(r'[^ \nA-Za-z0-9À-ÖØ-öø-ÿ]+', '', string)

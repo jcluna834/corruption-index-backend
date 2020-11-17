@@ -54,11 +54,13 @@ class PlagiarismDetection(BaseController):
             responseES = self.elasticsearhobj.searchByContent(paragraph_text)
             # Se evalua cada párrafo retornado
             for highlight in responseES['hits']['hits'][0]['highlight']['content']:
+                parag_text_clean = self.functions_plag_obj.getStringClean(paragraph_text)
+                highlight_clean = self.functions_plag_obj.getStringClean(highlight)
                 res_highlight_data = {
                     'content': highlight,
-                    'levenshtein_distance': self.functions_plag_obj.getLevenshteinDistance(paragraph_text, highlight),
-                    'similatiry_difflib': self.functions_plag_obj.getRatioSequenceMatcher(paragraph_text, highlight),
-                    'uncommon_words': list(self.functions_plag_obj.getUncommonWords(paragraph_text, highlight))
+                    'levenshtein_distance': self.functions_plag_obj.getLevenshteinDistance(parag_text_clean, highlight_clean),
+                    'similatiry_difflib': self.functions_plag_obj.getRatioSequenceMatcher(parag_text_clean, highlight_clean),
+                    'uncommon_words': list(self.functions_plag_obj.getUncommonWords(parag_text_clean, highlight_clean))
                 }
                 highlight_response.append(res_highlight_data)
 
