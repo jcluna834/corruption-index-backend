@@ -1,3 +1,5 @@
+import json
+
 __author__ = "Suyash Soni"
 __email__ = "suyash.soni248@gmail.com"
 
@@ -27,6 +29,7 @@ class PlagiarismDetection(BaseController):
         #response_skl = []
         response_es = []
         highlight_response = []
+        my_uncommon_response = []
         data = request.get_json(force=True)
         input_doc = data.get('text', None)
         if input_doc is None:
@@ -35,32 +38,21 @@ class PlagiarismDetection(BaseController):
         # Se divide en párrafos el texto recibido
         token_text = sent_tokenize(input_doc)
         for paragraph_text in token_text:
-            ''' Se detecta similitud haciendo uso de sklearn
-                Es omitido dado que se hará uso de ElasticSeach '''
-            ''' most_similar_doc_info: Dict = self.plag_detector.compute_similarity(paragraph_text)
-            most_similar_doc = most_similar_doc_info['doc']
-            similarity_score = most_similar_doc_info['similarity_score']
-            similarity_percentage = round(similarity_score * 100, 2)
-            # Se arma la respuesta de sklearn
-            res_data = {
-                'paragraph_text': paragraph_text,
-                'similarity_score': similarity_score,
-                'similarity_percentage': similarity_percentage,
-                'doc': most_similar_doc.to_dict()
-            }
-            response_skl.append(res_data) '''
-
             # Se detecta similitud haciendo uso de ElasticSearh
             responseES = self.elasticsearhobj.searchByContent(paragraph_text)
             # Se evalua cada párrafo retornado
             for highlight in responseES['hits']['hits'][0]['highlight']['content']:
                 parag_text_clean = self.functions_plag_obj.getStringClean(paragraph_text)
                 highlight_clean = self.functions_plag_obj.getStringClean(highlight)
+                uncommon_words = list(self.functions_plag_obj.getUncommonWords(parag_text_clean,highlight_clean))
+                my_uncommon_words = self.functions_plag_obj.getHighlightPerformance(uncommon_words,parag_text_clean)
+
                 res_highlight_data = {
                     'content': highlight,
                     'levenshtein_distance': self.functions_plag_obj.getLevenshteinDistance(parag_text_clean, highlight_clean),
                     'similatiry_difflib': self.functions_plag_obj.getRatioSequenceMatcher(parag_text_clean, highlight_clean),
-                    'uncommon_words': list(self.functions_plag_obj.getUncommonWords(parag_text_clean, highlight_clean))
+                    'uncommon_words': uncommon_words,
+                    'my_uncommon_words': my_uncommon_words
                 }
                 highlight_response.append(res_highlight_data)
 
