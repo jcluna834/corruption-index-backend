@@ -44,13 +44,13 @@ class PlagiarismDAO(BaseService):
             "count": count
         }
 
-    def create_doc(self, content, title, description='', author=''):
+    def create_doc(self, content, title, description='', responsibleCode='', announcementCode=''):
         """
         Creates an document.
         :param data: document's properties as json.
         :return:
         """
-        doc = Document(content=content, title=title, description=description, author=author)
+        doc = Document(content=content, title=title, description=description, responsibleCode=responsibleCode, announcementCode=announcementCode)
         self.db.session.add(doc)
         self.db.session.commit()
         return doc

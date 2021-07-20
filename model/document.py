@@ -11,8 +11,9 @@ class Document(BaseModel):
 
     content = db.Column('content', db.Text(), nullable=False)
     title = db.Column('title', db.String(200), nullable=False)
-    description = db.Column('description', db.Text(), nullable=True)
-    author = db.Column('author', db.String(200), nullable=True)
+    description = db.Column('description', db.Text(), nullable=False)
+    responsibleCode = db.Column('responsibleCode', db.Integer, nullable=False)
+    announcementCode = db.Column('announcementCode', db.Integer, nullable=False)
 
     # Table metadata can be specified as follows -
     __table_args__ = (
@@ -41,7 +42,6 @@ class Document(BaseModel):
             'created_date': self.created_date,
             'updated_date': self.updated_date,
             'title': self.title,
-            'author': self.author,
             'description': self.description,
             'content': self.content,
             'is_deleted': self.is_deleted

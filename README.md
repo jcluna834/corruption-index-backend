@@ -38,10 +38,16 @@ $ pip3 install -r requirements.txt
 $ python -m unittest discover -s 'tests' -p '*.py'
 ```
 
+```sh
+$ python -m nltk.downloader stopwords
+```
+
+
 6. Run server as - 
 ```sh
 $ python app.py 
 ```
+
 > Now you can access the application by visiting ```{protocol}://{host}:{port}```. For localhost it is ```http://localhost:5000```.
 
 

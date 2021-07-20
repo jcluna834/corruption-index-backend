@@ -3,11 +3,20 @@ __email__ = "suyash.soni248@gmail.com"
 
 import os
 from flask import Flask
+from flask import Flask, jsonify
+from bson.json_util import ObjectId
+import json
 
 __basedir__ = os.path.abspath(os.path.dirname(__file__))
 
-app = Flask(__name__)
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        return json.JSONEncoder.default(self, o)
 
+app = Flask(__name__)
+app.json_encoder = JSONEncoder
 
 # Ideally, there will be one config class per environment(dev, qa, uat, prod)
 class __Config__(object):

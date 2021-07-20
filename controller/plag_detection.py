@@ -1,8 +1,7 @@
-import json
-
 __author__ = "Suyash Soni"
 __email__ = "suyash.soni248@gmail.com"
 
+import json
 from flask import request
 from util.response import intercept, Response
 from controller.base import BaseController
@@ -14,7 +13,13 @@ from controller import elasticsearch
 from controller import functions_plag
 from nltk.tokenize import sent_tokenize
 from nltk.corpus import stopwords
+from pymongo import MongoClient
+client = MongoClient('localhost:27017')
 
+#Se descarga sinonimos al inicio
+'''import nltk
+nltk.download('punkt')
+'''
 stopwords = stopwords.words('spanish')
 
 class PlagiarismDetection(BaseController):
@@ -25,7 +30,7 @@ class PlagiarismDetection(BaseController):
     @intercept()
     def post(self, *args, **kwargs):
         """Detects plagiarism"""
-
+        __collection__ = 'PlagiarismDetection'
         #response_skl = []
         response_es = []
         highlight_response = []
@@ -70,4 +75,9 @@ class PlagiarismDetection(BaseController):
         super_res_data = {
             'response_elastic': response_es
         }
-        return Response(status_code=200, message='Return info match', data=super_res_data)
+        data = super_res_data.copy()
+        # Save in collection MongoDB
+        db = client.get_database(__collection__)
+        collection = db.PlagiarismDetection
+        collection.insert_one(super_res_data)
+        return Response(status_code=200, message='Return info match', data=data)

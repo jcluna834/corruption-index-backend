@@ -1,6 +1,8 @@
 __author__ = "Suyash Soni"
 __email__ = "suyash.soni248@gmail.com"
 
+from bson import json_util, ObjectId
+
 import json
 import logging
 
@@ -9,6 +11,11 @@ from flask_restful import Api
 from mysql_connector import db
 from settings import app, config
 from util.logger import Logger
+
+from flask import (
+    Flask,
+    render_template
+)
 
 app.url_map.strict_slashes = False
 api = Api(app)
@@ -64,6 +71,14 @@ register_urls(api)
 @app.route("/api/v1/plagiarism")
 def index():
     return json.dumps({"message": "Welcome to Plagiarism Detector"})
+    """
+    This function just responds to the browser ULR
+    localhost:5000/
+
+    :return:        the rendered template 'home.html'
+    
+    return render_template('home.html')
+    """
 
 
 if __name__ == '__main__':

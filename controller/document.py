@@ -21,16 +21,17 @@ class Document(BaseController):
     def post(self, *args, **kwargs):
         """Adds a new document to repo"""
         data = request.get_json(force=True)
-
         content = data.get('content', '')
         title = data.get('title', '')
         description = data.get('description', '')
-        author = data.get('author', '')
+        responsibleCode = data.get('responsibleCode', '')
+        announcementCode = data.get('announcementCode', '')
 
         if content and title:
             # Se agrega el documento en la BD
-            doc = self.plag_dao.create_doc(content, title, description=description, author=author)
-            #Se agrega el documento al índice en elasticsearh
+            doc = self.plag_dao.create_doc(content, title, description=description, responsibleCode=responsibleCode, announcementCode=announcementCode)
+            print(doc)
+            # Se agrega el documento al índice en elasticsearh
             self.elasticsearhobj.add(doc.to_dict_es())
         else:
             ExceptionBuilder(BadRequest).error(HttpErrorCode.REQUIRED_FIELD, 'content', 'title').throw()

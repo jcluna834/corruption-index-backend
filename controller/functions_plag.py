@@ -15,6 +15,10 @@ from model.uncommon_word import Uncommon_word
 from nltk import word_tokenize
 import lxml
 
+#Se descarga sinonimos al inicio
+'''import nltk
+nltk.download('stopwords')
+'''
 stemmer = SnowballStemmer('spanish')
 stop_words = set(stopwords.words('spanish'))
 
