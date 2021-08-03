@@ -34,6 +34,8 @@ class __Config__(object):
     LOGGING = {
         'LEVEL': 'INFO'
     }
+    USERAUTHID = 1
+    ANNOUNCEMENTID = 1
 
 
 app.config.from_object(__Config__)

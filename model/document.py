@@ -30,7 +30,6 @@ class Document(BaseModel):
     def to_dict(self, *args, **kwargs):
         return {
             'id': self.id,
-            'author': self.author,
             'title': self.title,
             'description': self.description,
             'content': self.content

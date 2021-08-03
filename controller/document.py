@@ -83,11 +83,8 @@ class Document(BaseController):
 
     @intercept()
     def post(self, *args, **kwargs):
-        print("---------------------entro a guardar---------------------")
         """Adds a new document to repo"""
         data = request.get_json(force=True)
-        print(data)
-        print(type(data))
         return self.saveDocument(data)
 
     @intercept()
@@ -104,7 +101,6 @@ class Document(BaseController):
     
     @app.route("/api/v1/plagiarism/uploadFile", methods=['GET','POST'])
     def upload_file():
-        print(UPLOAD_FOLDER)
         if request.method == 'POST':
             # check if the post request has the file part
             if 'file' not in request.files:

@@ -14,7 +14,12 @@ from controller import functions_plag
 from nltk.tokenize import sent_tokenize
 from nltk.corpus import stopwords
 from pymongo import MongoClient
+from settings import app, config
+from flask import jsonify
+from bson.objectid import ObjectId
+
 client = MongoClient('localhost:27017')
+__collection__ = 'PlagiarismDetection'
 
 #Se descarga sinonimos al inicio
 '''import nltk
@@ -22,15 +27,21 @@ nltk.download('punkt')
 '''
 stopwords = stopwords.words('spanish')
 
+def getCurrentUser():
+    return config['USERAUTHID']
+
+def getCurrentAnnouncement():
+    return config['ANNOUNCEMENTID']
+
 class PlagiarismDetection(BaseController):
     plag_detector: PlagiarismDetector = inject(PlagiarismDetector)
     elasticsearhobj = elasticsearch.ElasticSearchFunction()
     functions_plag_obj = functions_plag.FunctionsPlagiarism()
 
+
     @intercept()
     def post(self, *args, **kwargs):
         """Detects plagiarism"""
-        __collection__ = 'PlagiarismDetection'
         #response_skl = []
         response_es = []
         highlight_response = []
@@ -73,7 +84,9 @@ class PlagiarismDetection(BaseController):
 
         # Respuesta final entregada en el POST
         super_res_data = {
-            'response_elastic': response_es
+            'response_elastic': response_es,
+            'responsibleCode': getCurrentUser(),
+            'announcementCode': getCurrentAnnouncement()
         }
         data = super_res_data.copy()
         # Save in collection MongoDB
@@ -81,3 +94,19 @@ class PlagiarismDetection(BaseController):
         collection = db.PlagiarismDetection
         collection.insert_one(super_res_data)
         return Response(status_code=200, message='Return info match', data=data)
+
+    @app.route("/api/v1/plagiarism/getReportsSimilarity", methods=['GET'])
+    def getReportsSimilarity():
+        db = client.get_database(__collection__)
+        collection = db.PlagiarismDetection
+        responseCollection = collection.find({"responsibleCode": getCurrentUser()})
+        list_cur = list(responseCollection)
+        return jsonify(status_code=201, message='Reports returned successfully!', data=list_cur)
+
+    @app.route("/api/v1/plagiarism/getReport/<id>", methods=['GET'])
+    def getReport(id):
+        db = client.get_database(__collection__)
+        collection = db.PlagiarismDetection
+        responseCollection = collection.find({"_id":ObjectId(id)})
+        list_cur = list(responseCollection)
+        return jsonify(status_code=201, message='Report returned successfully!', data=list_cur)
