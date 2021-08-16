@@ -70,12 +70,13 @@ class Document(BaseController):
         description = data.get('description', '')
         responsibleCode = data.get('responsibleCode', '')
         announcementCode = data.get('announcementCode', '')
+        indexDoc = data.get('indexDoc', '')
         if content and title:
             # Se agrega el documento en la BD
             doc = self.plag_dao.create_doc(content, title, description=description, responsibleCode=responsibleCode, announcementCode=announcementCode)
-            print(doc)
             # Se agrega el documento al índice en elasticsearh
-            self.elasticsearhobj.add(doc.to_dict_es())
+            if indexDoc == 1:
+                self.elasticsearhobj.add(doc.to_dict_es())
         else:
             ExceptionBuilder(BadRequest).error(HttpErrorCode.REQUIRED_FIELD, 'content', 'title').throw()
 
@@ -96,7 +97,6 @@ class Document(BaseController):
         res = self.plag_dao.get_docs(page=int(request.args.get("page", 1)),
                                      per_page=int(request.args.get("per_page", 10)), all='all' in request.args)
         docs_info = dict(data=[d.to_dict() for d in res['data']], count=res['count'])
-        print(docs_info)
         return Response(data=docs_info)
     
     @app.route("/api/v1/plagiarism/uploadFile", methods=['GET','POST'])
@@ -116,11 +116,14 @@ class Document(BaseController):
                 #fhandle = open(os.path.join(config['UPLOAD_FOLDER'], filename), 'rb')
                 content_pdf = convert_pdf_to_txt(os.path.join(config['UPLOAD_FOLDER'], filename))
                 #TODO -- Obtener el responsibleCode y announcementCode
-                data =  {'content':content_pdf, 'title':filename, 'description':'', 'responsibleCode':1, 'announcementCode':1}
+                data =  {'content':content_pdf, 'title':request.form.get("title"), 'description':request.form.get("description"), 'indexDoc':request.form.get("indexDoc"),
+                    'responsibleCode':request.form.get("responsibleCode"), 'announcementCode':request.form.get("announcementCode")}
                 try:
                     doc = Document()
                     doc.saveDocument(data)
                 except:
+                    #TODO - validar que el documento no exista previamente para eliminar / agregar
+                    os.remove(os.path.join(config['UPLOAD_FOLDER'], filename))
                     return jsonify(status_code=500, message='Error to save document in BD or Elastic!')
                 return jsonify(status_code=201, message='Document added successfully!')
         return '''
