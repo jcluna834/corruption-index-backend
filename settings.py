@@ -36,6 +36,7 @@ class __Config__(object):
     }
     USERAUTHID = 1
     ANNOUNCEMENTID = 1
+    ENTITYID = 1
 
 
 app.config.from_object(__Config__)
