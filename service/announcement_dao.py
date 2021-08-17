@@ -59,3 +59,8 @@ class AnnouncementDAO(BaseService):
         self.db.session.add(announcements)
         self.db.session.commit()
         return announcements
+
+    def deleteAnnouncement(self, announcementId):
+        deleted_objects = Announcement.__table__.delete().where(Announcement.id.in_([announcementId]))
+        self.db.session.execute(deleted_objects)
+        self.db.session.commit()

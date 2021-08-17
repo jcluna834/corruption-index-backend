@@ -6,6 +6,7 @@ from util.response import intercept, Response
 from controller.base import BaseController
 from util.injector import inject
 from service.announcement_dao import AnnouncementDAO
+from service.plag_dao import PlagiarismDAO
 from util.constants.error_codes import HttpErrorCode
 from util.error_handlers.exceptions import ExceptionBuilder, BadRequest
 from controller import elasticsearch
@@ -16,6 +17,7 @@ from flask import jsonify
 class Announcement(BaseController):
     announcement_dao: AnnouncementDAO = inject(AnnouncementDAO)
     elasticsearhobj = elasticsearch.ElasticSearchFunction()
+    plag_dao: PlagiarismDAO = inject(PlagiarismDAO)
 
     def __init__(self):
         self.events = []
@@ -51,3 +53,14 @@ class Announcement(BaseController):
                                      per_page=int(request.args.get("per_page", 10)), all='all' in request.args)
         docs_info = dict(data=[d.to_dict() for d in res['data']], count=res['count'])
         return Response(data=docs_info)
+
+    
+    @intercept()
+    def delete(self, *args, **kwargs):
+        id = request.get_json()
+        res = self.plag_dao.existDocumentsAnnouncement(id)
+        if(res['count'] > 0):
+            return Response(success=False, status_code=200, message='Announcement cant be deleted because has documents!')
+        
+        res = self.announcement_dao.deleteAnnouncement(id)
+        return Response(status_code=201, message='Announcement added successfully!')

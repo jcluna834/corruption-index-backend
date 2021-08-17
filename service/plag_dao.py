@@ -44,6 +44,25 @@ class PlagiarismDAO(BaseService):
             "count": count
         }
 
+    def existDocumentsAnnouncement(self, announcementId):
+        """
+        get documents' list fron annoumcement.
+        :param id: Announcement id
+        :return: List of documents
+        """
+
+        query = {'is_deleted': 0, 'announcementCode':announcementId}
+
+        doc_queryset = Document.query.filter_by(**query)
+        count = doc_queryset.count()
+        doc_queryset = doc_queryset.order_by(Document.created_date.desc())
+        docs = doc_queryset.all()
+
+        return {
+            "data": docs,
+            "count": count
+        }
+
     def create_doc(self, content, title, description='', responsibleCode='', announcementCode=''):
         """
         Creates an document.
