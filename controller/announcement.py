@@ -22,16 +22,20 @@ class Announcement(BaseController):
     def __init__(self):
         self.events = []
 
-    def saveAnnouncement(self, data):
+    def saveAnnouncement(self, data, option):
         name = data.get('name', '')
         description = data.get('description', '')
         startDate = data.get('startDate', '')
         endDate = data.get('endDate', '')
         responsible_code = data.get('responsibleCode', '')
         entity_code = data.get('entityCode', '')
-        if name and description:
+        if name and description and endDate and startDate:
             # Se agrega el documento en la BD
-            self.announcement_dao.create_announcements(name, description, startDate, endDate, responsible_code, entity_code)
+            if (option == "save"):
+                self.announcement_dao.create_announcements(name, description, startDate, endDate, responsible_code, entity_code)
+            else:
+                id = data.get('id', '')
+                self.announcement_dao.edit_announcements(id, name, description, startDate, endDate, responsible_code, entity_code)
         else:
             ExceptionBuilder(BadRequest).error(HttpErrorCode.REQUIRED_FIELD, 'name').throw()
 
@@ -41,7 +45,7 @@ class Announcement(BaseController):
     def post(self, *args, **kwargs):
         """Adds a new document to repo"""
         data = request.get_json(force=True)
-        return self.saveAnnouncement(data)
+        return self.saveAnnouncement(data, "save")
 
     @intercept()
     def get(self):
@@ -64,3 +68,9 @@ class Announcement(BaseController):
         
         res = self.announcement_dao.deleteAnnouncement(id)
         return Response(status_code=201, message='Announcement added successfully!')
+
+    @intercept()
+    def put(self, *args, **kwargs):
+        """Adds a new document to repo"""
+        data = request.get_json(force=True)
+        return self.saveAnnouncement(data, "update")

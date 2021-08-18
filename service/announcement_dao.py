@@ -60,6 +60,22 @@ class AnnouncementDAO(BaseService):
         self.db.session.commit()
         return announcements
 
+    def edit_announcements(self, id, name, description, startDate, endDate, responsibleCode, entityCode):
+        """
+        Update an announcements.
+        :param data: announcements's properties as json.
+        :return:
+        """
+        announcement = Announcement.query.filter_by(id=id).first()
+        announcement.name = name
+        announcement.description = description
+        announcement.startDate = startDate
+        announcement.endDate = endDate
+        announcement.responsible_code = responsibleCode
+        announcement.entity_code = entityCode
+        self.db.session.commit()
+        return announcement
+
     def deleteAnnouncement(self, announcementId):
         deleted_objects = Announcement.__table__.delete().where(Announcement.id.in_([announcementId]))
         self.db.session.execute(deleted_objects)
