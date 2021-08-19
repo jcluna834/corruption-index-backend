@@ -1,7 +1,7 @@
 __author__ = "Suyash Soni"
 __email__ = "suyash.soni248@gmail.com"
 
-from flask import request, flash, redirect, url_for
+from flask import request, flash, redirect, url_for, send_file, send_from_directory
 from util.response import intercept, Response
 from controller.base import BaseController
 from util.injector import inject
@@ -64,29 +64,42 @@ class Document(BaseController):
     def __init__(self):
         self.events = []
 
-    def saveDocument(self, data):
+    def saveDocument(self, data, option):
         content = data.get('content', '')
         title = data.get('title', '')
         description = data.get('description', '')
         responsibleCode = data.get('responsibleCode', '')
         announcementCode = data.get('announcementCode', '')
         indexDoc = data.get('indexDoc', '')
-        if content and title:
+        mesagge = ""
+        if title:
             # Se agrega el documento en la BD
-            doc = self.plag_dao.create_doc(content, title, description=description, responsibleCode=responsibleCode, announcementCode=announcementCode)
-            # Se agrega el documento al índice en elasticsearh
-            if indexDoc == 1:
-                self.elasticsearhobj.add(doc.to_dict_es())
-        else:
-            ExceptionBuilder(BadRequest).error(HttpErrorCode.REQUIRED_FIELD, 'content', 'title').throw()
+            if (option == "save"):
+                if content:
+                    # Se agrega el documento en la BD
+                    doc = self.plag_dao.create_doc(content, title, description=description, responsibleCode=responsibleCode, announcementCode=announcementCode)
+                    # Se agrega el documento al índice en elasticsearh
+                    if indexDoc == 1:
+                        self.elasticsearhobj.add(doc.to_dict_es())
+                    message='Document added successfully!'
+                else:
+                    ExceptionBuilder(BadRequest).error(HttpErrorCode.REQUIRED_FIELD, 'content').throw()
+            else:
+                id = data.get('id', '')
+                doc = self.plag_dao.edit_doc(id, title, description=description, responsibleCode=responsibleCode, announcementCode=announcementCode)
+                #TODO - implementar la actualización en ELASTICSEARCH
+                message='Document updated successfully!'
 
-        return Response(status_code=201, message='Document added successfully!')
+        else:
+            ExceptionBuilder(BadRequest).error(HttpErrorCode.REQUIRED_FIELD, 'title').throw()
+
+        return Response(status_code=201, message=message)
 
     @intercept()
     def post(self, *args, **kwargs):
         """Adds a new document to repo"""
         data = request.get_json(force=True)
-        return self.saveDocument(data)
+        return self.saveDocument(data, "save")
 
     @intercept()
     def get(self):
@@ -94,10 +107,17 @@ class Document(BaseController):
         Fetches all the documents(paginated).
         :return:
         """
-        res = self.plag_dao.get_docs(page=int(request.args.get("page", 1)),
+        res = self.plag_dao.get_docs_info(page=int(request.args.get("page", 1)),
                                      per_page=int(request.args.get("per_page", 10)), all='all' in request.args)
-        docs_info = dict(data=[d.to_dict() for d in res['data']], count=res['count'])
+        
+        docs_info = dict(data=[d for d in res['data']], count=res['count'])
         return Response(data=docs_info)
+
+    @intercept()
+    def put(self, *args, **kwargs):
+        """Adds a new document to repo"""
+        data = request.get_json(force=True)
+        return self.saveDocument(data, "update")
     
     @app.route("/api/v1/plagiarism/uploadFile", methods=['GET','POST'])
     def upload_file():
@@ -116,7 +136,8 @@ class Document(BaseController):
                 #fhandle = open(os.path.join(config['UPLOAD_FOLDER'], filename), 'rb')
                 content_pdf = convert_pdf_to_txt(os.path.join(config['UPLOAD_FOLDER'], filename))
                 #TODO -- Obtener el responsibleCode y announcementCode
-                data =  {'content':content_pdf, 'title':request.form.get("title"), 'description':request.form.get("description"), 'indexDoc':request.form.get("indexDoc"),
+                data =  {'content':content_pdf, 'title':request.form.get("title"), 'description':request.form.get("description"), 'fileName':filename,
+                    'indexDoc':request.form.get("indexDoc"),
                     'responsibleCode':request.form.get("responsibleCode"), 'announcementCode':request.form.get("announcementCode")}
                 try:
                     doc = Document()
@@ -135,3 +156,8 @@ class Document(BaseController):
         <input type=submit value=Upload>
         </form>
         '''
+
+    @app.route('/api/v1/plagiarism/downloadFile/<path:filename>', methods=['GET', 'POST'])
+    def download(filename):
+        path = os.path.join(config['UPLOAD_FOLDER'], filename)
+        return send_file(path_or_file=path, as_attachment=True)

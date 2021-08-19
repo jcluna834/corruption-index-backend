@@ -11,6 +11,7 @@ class Document(BaseModel):
 
     content = db.Column('content', db.Text(), nullable=False)
     title = db.Column('title', db.String(200), nullable=False)
+    fileName = db.Column('fileName', db.String(200), nullable=False)
     description = db.Column('description', db.Text(), nullable=False)
     responsibleCode = db.Column('responsibleCode', db.Integer, nullable=False)
     announcementCode = db.Column('announcementCode', db.Integer, nullable=False)
