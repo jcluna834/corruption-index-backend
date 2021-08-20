@@ -55,7 +55,7 @@ class PlagiarismDAO(BaseService):
         start, stop = per_page * (page - 1), per_page * page
         query = {'is_deleted': 0}
 
-        stmt = text("select d.id as documentId, d.title, d.description as documentDescription, a.id as announcementCode, a.name as announcementName, d.fileName "
+        stmt = text("select d.id as documentId, d.title, d.description as documentDescription, a.id as announcementCode, a.name as announcementName, d.fileName, d.status "
             "from documents d join announcement a on d.announcementCode = a.id "
             "where d.is_deleted = 0 and a.is_deleted = 0 and d.responsibleCode = :codeUser and a.responsible_code = :codeUser").\
             bindparams(codeUser=config['USERAUTHID'])
@@ -70,6 +70,20 @@ class PlagiarismDAO(BaseService):
             "data": insertObject,
             "count": len(records)
         }
+
+    def get_doc(self, documentId):
+        """
+        get especific document' .
+        :param id: Document id
+        :return: List of documents
+        """
+
+        query = {'is_deleted': 0, 'id':documentId}
+
+        doc_queryset = Document.query.filter_by(**query)
+        docs = doc_queryset.one()
+
+        return docs.to_dict_es()
 
     def existDocumentsAnnouncement(self, announcementId):
         """
@@ -112,5 +126,16 @@ class PlagiarismDAO(BaseService):
         document.description = description
         document.responsibleCode = responsibleCode
         document.announcementCode = announcementCode
+        self.db.session.commit()
+        return document
+
+    def updateStatus(self, id, status):
+        """
+        Update an document.
+        :param data: document's properties as json.
+        :return:
+        """
+        document = Document.query.filter_by(id=id).first()
+        document.status = status
         self.db.session.commit()
         return document

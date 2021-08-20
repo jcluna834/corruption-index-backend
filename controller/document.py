@@ -161,3 +161,16 @@ class Document(BaseController):
     def download(filename):
         path = os.path.join(config['UPLOAD_FOLDER'], filename)
         return send_file(path_or_file=path, as_attachment=True)
+
+    @app.route("/api/v1/plagiarism/indexDocument", methods=['POST'])
+    def indexDocument():
+        try:
+            data = request.get_json()
+            # Se obtiene la información del documento
+            document = Document()
+            doc = document.plag_dao.get_doc(data['id'])
+            response_es = document.elasticsearhobj.add(doc)
+            document.plag_dao.updateStatus(data['id'], 2) #Status a indexado
+        except:
+            return jsonify(status_code=500, message='Error to index document in Elastic!')
+        return jsonify(status_code=200, message='Document idexed successfully!')

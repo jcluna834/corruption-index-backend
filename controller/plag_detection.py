@@ -2,11 +2,14 @@ __author__ = "Suyash Soni"
 __email__ = "suyash.soni248@gmail.com"
 
 import json
+import re
 from flask import request
 from util.response import intercept, Response
 from controller.base import BaseController
 from util.injector import inject
 from service.plag_detector import PlagiarismDetector
+from service.plag_dao import PlagiarismDAO
+from service.analysisHistory_dao import AnalysisHistoryDAO
 from util.constants.error_codes import HttpErrorCode
 from util.error_handlers.exceptions import ExceptionBuilder, BadRequest
 from controller import elasticsearch
@@ -37,22 +40,17 @@ class PlagiarismDetection(BaseController):
     plag_detector: PlagiarismDetector = inject(PlagiarismDetector)
     elasticsearhobj = elasticsearch.ElasticSearchFunction()
     functions_plag_obj = functions_plag.FunctionsPlagiarism()
+    plag_dao: PlagiarismDAO = inject(PlagiarismDAO)
+    analyisHistory_dao: AnalysisHistoryDAO = inject(AnalysisHistoryDAO)
 
-
-    @intercept()
-    def post(self, *args, **kwargs):
-        """Detects plagiarism"""
+    def similarityAnalisis(self, data, documentId=''):
         #response_skl = []
         response_es = []
         highlight_response = []
         my_uncommon_response = []
-        data = request.get_json(force=True)
-        input_doc = data.get('text', None)
-        if input_doc is None:
-            ExceptionBuilder(BadRequest).error(HttpErrorCode.REQUIRED_FIELD, 'text').throw()
-
+        print("entro---------------------")
         # Se divide en párrafos el texto recibido
-        token_text = sent_tokenize(input_doc)
+        token_text = sent_tokenize(data)
         for paragraph_text in token_text:
             # Se detecta similitud haciendo uso de ElasticSearh
             responseES = self.elasticsearhobj.searchByContent(paragraph_text)
@@ -86,14 +84,28 @@ class PlagiarismDetection(BaseController):
         super_res_data = {
             'response_elastic': response_es,
             'responsibleCode': getCurrentUser(),
-            'announcementCode': getCurrentAnnouncement()
+            'announcementCode': getCurrentAnnouncement(),
+            'documentID': documentId
         }
-        data = super_res_data.copy()
+        analysis_response = super_res_data.copy()
         # Save in collection MongoDB
         db = client.get_database(__collection__)
         collection = db.PlagiarismDetection
         collection.insert_one(super_res_data)
-        return Response(status_code=200, message='Return info match', data=data)
+
+        return analysis_response
+
+    @intercept()
+    def post(self, *args, **kwargs):
+        """Detects plagiarism"""
+        data = request.get_json(force=True)
+        input_doc = data.get('text', None)
+        if input_doc is None:
+            ExceptionBuilder(BadRequest).error(HttpErrorCode.REQUIRED_FIELD, 'text').throw()
+        
+        analysis_response = self.similarityAnalisis(input_doc)
+        return Response(status_code=200, message='Return info match', data=analysis_response)
+        
 
     @app.route("/api/v1/plagiarism/getReportsSimilarity", methods=['GET'])
     def getReportsSimilarity():
@@ -110,3 +122,30 @@ class PlagiarismDetection(BaseController):
         responseCollection = collection.find({"_id":ObjectId(id)})
         list_cur = list(responseCollection)
         return jsonify(status_code=201, message='Report returned successfully!', data=list_cur)
+
+    @app.route("/api/v1/plagiarism/executeSimilarityAnalisis", methods=['POST'])
+    def executeSimilarityAnalisis():
+        try:
+            data = request.get_json()
+            # Se obtiene la información del documento
+            plagiarismDetection = PlagiarismDetection()
+            doc = plagiarismDetection.plag_dao.get_doc()
+            response_analysis = plagiarismDetection.similarityAnalisis('Ultimamente se ha observado un incremento', data['id']) #fijar a doc['content']
+            plagiarismDetection.plag_dao.updateStatus(data['id'], 1) #Status a analizado
+        except:
+            return jsonify(status_code=500, message='Error to index document in Elastic!')
+        return jsonify(status_code=200, success=True, message='Return info match', data=response_analysis)
+
+    @app.route("/api/v1/plagiarism/SimulateExecuteSimilarityAnalisis", methods=['POST'])
+    def SimulateExecuteSimilarityAnalisis():
+        #try:
+        plagiarismDetection = PlagiarismDetection()
+        data = request.get_json()
+        plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['id'], 0)
+        print("inicio")
+        import time
+        time.sleep(20)
+        print("termino")
+        #except:
+            #return jsonify(status_code=500, message='Error to index document in Elastic!')
+        return jsonify(status_code=200, success=True, message='Return info match', data="response_analysis")

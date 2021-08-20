@@ -15,6 +15,7 @@ class Document(BaseModel):
     description = db.Column('description', db.Text(), nullable=False)
     responsibleCode = db.Column('responsibleCode', db.Integer, nullable=False)
     announcementCode = db.Column('announcementCode', db.Integer, nullable=False)
+    status = db.Column('status', db.Integer, nullable=False)
 
     # Table metadata can be specified as follows -
     __table_args__ = (
@@ -40,9 +41,10 @@ class Document(BaseModel):
         return {
             'id': self.id,
             'created_date': self.created_date,
-            'updated_date': self.updated_date,
             'title': self.title,
             'description': self.description,
             'content': self.content,
+            'responsibleCode': self.responsibleCode,
+            'announcementCode': self.announcementCode,
             'is_deleted': self.is_deleted
         }
