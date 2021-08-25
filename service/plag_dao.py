@@ -77,13 +77,21 @@ class PlagiarismDAO(BaseService):
         :param id: Document id
         :return: List of documents
         """
-
         query = {'is_deleted': 0, 'id':documentId}
-
         doc_queryset = Document.query.filter_by(**query)
         docs = doc_queryset.one()
-
         return docs.to_dict_es()
+
+    def get_doc_info(self, documentId):
+        """
+        get especific document' .
+        :param id: Document id
+        :return: List of documents
+        """
+        query = {'is_deleted': 0, 'id':documentId}
+        doc_queryset = Document.query.filter_by(**query)
+        docs = doc_queryset.one()
+        return docs.to_dict()
 
     def existDocumentsAnnouncement(self, announcementId):
         """

@@ -34,7 +34,8 @@ class Document(BaseModel):
             'id': self.id,
             'title': self.title,
             'description': self.description,
-            'content': self.content
+            'content': self.content,
+            'fileName': self.fileName
         }
 
     def to_dict_es(self, *args, **kwargs):

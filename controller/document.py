@@ -174,3 +174,10 @@ class Document(BaseController):
         except:
             return jsonify(status_code=500, message='Error to index document in Elastic!')
         return jsonify(status_code=200, message='Document idexed successfully!')
+
+    @app.route("/api/v1/plagiarism/getDocumentInfo/<id>", methods=['GET'])
+    def getDocumentInfo(id):
+        # Se obtiene la información del documento
+        document = Document()
+        doc = document.plag_dao.get_doc_info(id)
+        return jsonify(status_code=201, message='Report returned successfully!', data=doc)

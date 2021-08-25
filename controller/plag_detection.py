@@ -48,7 +48,6 @@ class PlagiarismDetection(BaseController):
         response_es = []
         highlight_response = []
         my_uncommon_response = []
-        print("entro---------------------")
         # Se divide en párrafos el texto recibido
         token_text = sent_tokenize(data)
         for paragraph_text in token_text:
@@ -87,12 +86,14 @@ class PlagiarismDetection(BaseController):
             'announcementCode': getCurrentAnnouncement(),
             'documentID': documentId
         }
-        analysis_response = super_res_data.copy()
+
         # Save in collection MongoDB
         db = client.get_database(__collection__)
         collection = db.PlagiarismDetection
         collection.insert_one(super_res_data)
 
+        analysis_response = super_res_data.copy()
+        
         return analysis_response
 
     @intercept()
@@ -113,7 +114,16 @@ class PlagiarismDetection(BaseController):
         collection = db.PlagiarismDetection
         responseCollection = collection.find({"responsibleCode": getCurrentUser()})
         list_cur = list(responseCollection)
-        return jsonify(status_code=201, message='Reports returned successfully!', data=list_cur)
+        return jsonify(status_code=201, message='Reports returned successfully!', count=len(list_cur), data=list_cur)
+
+    @app.route("/api/v1/plagiarism/getReportsSimilarityByDocumentId/<documentID>", methods=['GET'])
+    def getReportsSimilarityByDocumentId(documentID):
+        db = client.get_database(__collection__)
+        collection = db.PlagiarismDetection
+        responseCollection = collection.find({"responsibleCode": getCurrentUser(), "documentID": documentID})
+        list_cur = list(responseCollection)
+        return jsonify(status_code=201, message='Reports returned successfully!', count=len(list_cur), data=list_cur)
+
 
     @app.route("/api/v1/plagiarism/getReport/<id>", methods=['GET'])
     def getReport(id):
@@ -130,22 +140,28 @@ class PlagiarismDetection(BaseController):
             # Se obtiene la información del documento
             plagiarismDetection = PlagiarismDetection()
             doc = plagiarismDetection.plag_dao.get_doc()
-            response_analysis = plagiarismDetection.similarityAnalisis('Ultimamente se ha observado un incremento', data['id']) #fijar a doc['content']
-            plagiarismDetection.plag_dao.updateStatus(data['id'], 1) #Status a analizado
+            #Se crea el registro histórico de análisis
+            analysisHistory = plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['id'], 0)
+            #Se ejecuta el proceso de análsis de similitud
+            response_analysis = plagiarismDetection.similarityAnalisis(doc['content'], data['id']) #fijar a doc['content']
+            #Status del documento a analizado
+            plagiarismDetection.plag_dao.updateStatus(data['id'], 1) 
+            #Status del histórico 
+            plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['id'], analysisHistory.id, 1, 'idCollection')
         except:
             return jsonify(status_code=500, message='Error to index document in Elastic!')
         return jsonify(status_code=200, success=True, message='Return info match', data=response_analysis)
 
     @app.route("/api/v1/plagiarism/SimulateExecuteSimilarityAnalisis", methods=['POST'])
     def SimulateExecuteSimilarityAnalisis():
-        #try:
-        plagiarismDetection = PlagiarismDetection()
-        data = request.get_json()
-        plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['id'], 0)
-        print("inicio")
-        import time
-        time.sleep(20)
-        print("termino")
-        #except:
-            #return jsonify(status_code=500, message='Error to index document in Elastic!')
+        try:
+            plagiarismDetection = PlagiarismDetection()
+            data = request.get_json()
+            plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['id'], 0)
+            print("inicio")
+            import time
+            time.sleep(20)
+            print("termino")
+        except:
+            return jsonify(status_code=500, message='Error to index document in Elastic!')
         return jsonify(status_code=200, success=True, message='Return info match', data="response_analysis")

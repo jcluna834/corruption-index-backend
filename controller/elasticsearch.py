@@ -40,7 +40,7 @@ class ElasticSearchFunction(BaseController):
                     "match": {"content": query}
                 },
                 "_source": {
-                    "includes": ["id", "author", "title", "description"]
+                    "includes": ["id", "title"]
                 },
                 "highlight": {
                     "pre_tags": [""],
