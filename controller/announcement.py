@@ -61,13 +61,16 @@ class Announcement(BaseController):
     
     @intercept()
     def delete(self, *args, **kwargs):
-        id = request.get_json()
-        res = self.plag_dao.existDocumentsAnnouncement(id)
-        if(res['count'] > 0):
-            return Response(success=False, status_code=200, message='Announcement cant be deleted because has documents!')
-        
-        res = self.announcement_dao.deleteAnnouncement(id)
-        return Response(status_code=201, message='Announcement added successfully!')
+        try:
+            id = request.get_json()
+            res = self.plag_dao.existDocumentsAnnouncement(id)
+            if(res['count'] > 0):
+                return Response(success=False, status_code=200, message='Announcement cant be deleted because has documents!')
+            
+            self.announcement_dao.deleteAnnouncement(id)
+        except:
+            return Response(status_code=500, message='Error to delete Announcement!')
+        return Response(status_code=201, message='Announcement deleted successfully!')
 
     @intercept()
     def put(self, *args, **kwargs):
