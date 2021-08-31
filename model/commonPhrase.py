@@ -22,7 +22,7 @@ class CommonPhrase(BaseModel):
     )
 
     def __str__(self):
-        return self.title
+        return self.phrase
 
     def __repr__(self):
         return json.dumps(self.to_dict())

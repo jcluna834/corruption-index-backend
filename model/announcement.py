@@ -9,6 +9,7 @@ from mysql_connector import db
 class Announcement(BaseModel):
     __tablename__ = 'announcement'
 
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column('name', db.String(200), nullable=False)
     description = db.Column('description', db.Text(), nullable=False)
     startDate = db.Column('startDate', db.String(), nullable=False)
@@ -46,5 +47,6 @@ class Announcement(BaseModel):
             'name': self.name,
             'description': self.description,
             'startDate': self.startDate.strftime("%m/%d/%Y, %H:%M:%S"),
-            'endDate': self.endDate.strftime("%m/%d/%Y, %H:%M:%S")
+            'endDate': self.endDate.strftime("%m/%d/%Y, %H:%M:%S"),
+            'entity_code': self.entity_code,
         }

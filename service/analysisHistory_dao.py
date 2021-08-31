@@ -82,14 +82,14 @@ class AnalysisHistoryDAO(BaseService):
         self.db.session.commit()
         return analysisHistory
 
-    def edit_analysisHistory(self, id, documentId, status, collectionId):
+    def edit_analysisHistory(self, id, status, collectionId):
         """
         Update an announcements.
         :param data: announcements's properties as json.
         :return:
         """
+
         analysisHistory = AnalysisHistory.query.filter_by(id=id).first()
-        analysisHistory.documentCode = documentId
         analysisHistory.status = status
         analysisHistory.collectionCode = collectionId
         self.db.session.commit()

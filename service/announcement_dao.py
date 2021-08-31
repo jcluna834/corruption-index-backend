@@ -49,6 +49,17 @@ class AnnouncementDAO(BaseService):
             "count": count
         }
 
+    def get_announcement(self, announcementId):
+        """
+        get especific document' .
+        :param id: Document id
+        :return: List of documents
+        """
+        query = {'is_deleted': 0, 'id':announcementId}
+        doc_queryset = Announcement.query.filter_by(**query)
+        docs = doc_queryset.one()
+        return docs.to_dict_es()
+
     def create_announcements(self, name, description, startDate, endDate, responsibleCode, entityCode):
         """
         Creates an announcements.

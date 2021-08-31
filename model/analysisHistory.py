@@ -1,5 +1,5 @@
-__author__ = "Suyash Soni"
-__email__ = "suyash.soni248@gmail.com"
+__author__ = "Julio Luna"
+__email__ = "jcluna834@gmail.com"
 
 import json
 from model.base import BaseModel
@@ -9,6 +9,7 @@ from mysql_connector import db
 class AnalysisHistory(BaseModel):
     __tablename__ = 'analysisHistory'
 
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     documentCode = db.Column('documentCode', db.String(200), db.ForeignKey('documents.id'), nullable=False)
     document = db.relationship("Document", backref=db.backref("documents", uselist=False))
     status = db.Column('status', db.Integer, nullable=False)
@@ -19,9 +20,6 @@ class AnalysisHistory(BaseModel):
         #db.UniqueConstraint('documentId', 'collectionId'),
         db.Index(BaseModel.create_index(__tablename__, 'documentCode', 'collectionCode'), 'documentCode', 'collectionCode'),
     )
-
-    def __str__(self):
-        return self.title
 
     def __repr__(self):
         return json.dumps(self.to_dict())

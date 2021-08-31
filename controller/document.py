@@ -67,17 +67,17 @@ class Document(BaseController):
     def saveDocument(self, data, option):
         content = data.get('content', '')
         title = data.get('title', '')
+        fileName = data.get('fileName', '')
         description = data.get('description', '')
         responsibleCode = data.get('responsibleCode', '')
         announcementCode = data.get('announcementCode', '')
         indexDoc = data.get('indexDoc', '')
-        mesagge = ""
         if title:
             # Se agrega el documento en la BD
             if (option == "save"):
                 if content:
                     # Se agrega el documento en la BD
-                    doc = self.plag_dao.create_doc(content, title, description=description, responsibleCode=responsibleCode, announcementCode=announcementCode)
+                    doc = self.plag_dao.create_doc(content, title, fileName, description=description, responsibleCode=responsibleCode, announcementCode=announcementCode)
                     # Se agrega el documento al índice en elasticsearh
                     if indexDoc == 1:
                         self.elasticsearhobj.add(doc.to_dict_es())
@@ -141,7 +141,7 @@ class Document(BaseController):
                     'responsibleCode':request.form.get("responsibleCode"), 'announcementCode':request.form.get("announcementCode")}
                 try:
                     doc = Document()
-                    doc.saveDocument(data)
+                    doc.saveDocument(data, "save")
                 except:
                     #TODO - validar que el documento no exista previamente para eliminar / agregar
                     os.remove(os.path.join(config['UPLOAD_FOLDER'], filename))

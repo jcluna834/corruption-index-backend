@@ -10,6 +10,7 @@ from util.injector import inject
 from service.plag_detector import PlagiarismDetector
 from service.plag_dao import PlagiarismDAO
 from service.analysisHistory_dao import AnalysisHistoryDAO
+from service.announcement_dao import AnnouncementDAO
 from util.constants.error_codes import HttpErrorCode
 from util.error_handlers.exceptions import ExceptionBuilder, BadRequest
 from controller import elasticsearch
@@ -44,8 +45,9 @@ class PlagiarismDetection(BaseController):
     functions_plag_obj = functions_plag.FunctionsPlagiarism()
     plag_dao: PlagiarismDAO = inject(PlagiarismDAO)
     analyisHistory_dao: AnalysisHistoryDAO = inject(AnalysisHistoryDAO)
+    announcement_dao: AnnouncementDAO = inject(AnnouncementDAO)
 
-    def similarityAnalisis(self, data, documentId=''):
+    def similarityAnalisis(self, data, documentId='', entityId=''):
         #response_skl = []
         response_es = []
         highlight_response = []
@@ -89,6 +91,7 @@ class PlagiarismDetection(BaseController):
             'responsibleCode': getCurrentUser(),
             'announcementCode': getCurrentAnnouncement(),
             'documentID': documentId,
+            'entityID': entityId,
             'AnalysisDate': datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         }
 
@@ -143,15 +146,18 @@ class PlagiarismDetection(BaseController):
             data = request.get_json()
             # Se obtiene la información del documento
             plagiarismDetection = PlagiarismDetection()
-            doc = plagiarismDetection.plag_dao.get_doc()
+            doc = plagiarismDetection.plag_dao.get_doc(data['id'])
             #Se crea el registro histórico de análisis
             analysisHistory = plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['id'], 0)
+            #Se obtiene el entity_code
+            announcement = plagiarismDetection.announcement_dao.get_announcement(data['announcementCode'])
             #Se ejecuta el proceso de análsis de similitud
-            response_analysis = plagiarismDetection.similarityAnalisis(doc['content'], data['id']) #fijar a doc['content']
+            response_analysis = plagiarismDetection.similarityAnalisis(doc['content'], data['id'], announcement['entity_code']) #fijar a doc['content']
             #Status del documento a analizado
             plagiarismDetection.plag_dao.updateStatus(data['id'], 1) 
             #Status del histórico 
-            plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['id'], analysisHistory.id, 1, 'idCollection')
+            #TODO obtener el id de json
+            plagiarismDetection.analyisHistory_dao.edit_analysisHistory(analysisHistory.id, 1, response_analysis["_id"])
         except:
             return jsonify(status_code=500, message='Error to index document in Elastic!')
         return jsonify(status_code=200, success=True, message='Return info match', data=response_analysis)
@@ -159,10 +165,11 @@ class PlagiarismDetection(BaseController):
     @app.route("/api/v1/plagiarism/SimulateExecuteSimilarityAnalisis", methods=['POST'])
     def SimulateExecuteSimilarityAnalisis():
         try:
+            print("inicio")
             plagiarismDetection = PlagiarismDetection()
             data = request.get_json()
             plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['id'], 0)
-            print("inicio")
+            announcement = plagiarismDetection.announcement_dao.get_announcement(data['announcementCode'])
             import time
             time.sleep(20)
             print("termino")
