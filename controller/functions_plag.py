@@ -11,7 +11,7 @@ from nltk.corpus import stopwords
 import requests
 from bs4 import BeautifulSoup
 from nltk.stem import SnowballStemmer
-from model.uncommon_word import Uncommon_word
+from model.uncommon_word import Uncommon_word, Similar_word
 from nltk import word_tokenize
 import lxml
 
@@ -37,8 +37,15 @@ class FunctionsPlagiarism(BaseController):
 
     # Retorna las palabras diferentes emtre dos cadenas - Retorna las diferentes en B
     def getUncommonWords(self, a, b):
-        un_comm = [i for i in "".join(b).split() if i not in "".join(a).split()]
-        return un_comm
+        uncommon_words = [i for i in "".join(b).split() if i not in "".join(a).split()]
+        filtered_sentence = [w for w in uncommon_words if not w in stop_words]
+        return filtered_sentence
+
+    # Retorna las palabras diferentes emtre dos cadenas - Retorna las diferentes en B
+    def getCommonWords(self, a, b):
+        common_words = [i for i in "".join(b).split() if i in "".join(a).split()]
+        filtered_sentence = [w for w in common_words if not w in stop_words]
+        return filtered_sentence
 
     # Retorna una cadena de texto limpia, sin caracteres especiales
     def getStringClean(self, string):
@@ -47,35 +54,41 @@ class FunctionsPlagiarism(BaseController):
     # Se obtiene el performance de cada Uncommon word
     def getHighlightPerformance(self, uncommon_words, stemmed_text):
         uncommon_words = [each_string.lower() for each_string in uncommon_words]
-        # se aplica stopwords
-        #print(uncommon_words)
+        # se aplica stopwords al highlight
         filtered_sentence = [w for w in uncommon_words if not w in stop_words]
-        #se aplica stem
-        stemmed_text = [stemmer.stem(i) for i in word_tokenize(stemmed_text)]
-        #print(filtered_sentence)
+        #se aplica stem a la frase entrante
+        # se aplica stopwords a la frase entrante
+        stemmed_text_list = [w for w in word_tokenize(stemmed_text) if not w in stop_words]
+        stemmed_text = [stemmer.stem(i) for i in stemmed_text_list]
+
+        my_similar_words = []
+        for i in range(len(stemmed_text_list)):
+            my_similar_words.append(Similar_word(stemmed_text_list[i], stemmed_text[i]))
+
         # Se aplica stem
         uncommon_words_stemmed = [stemmer.stem(i) for i in uncommon_words]
-        #print(uncommon_words_stemmed)
         # Se crean los objetos
         my_uncommon_words = []
+        #Se listan las palabras que no tienen relación
         for i in range(len(uncommon_words_stemmed)):
-            my_uncommon_words.append(Uncommon_word(uncommon_words[i], uncommon_words_stemmed[i], 'None'))
+            my_uncommon_words.append(Uncommon_word(uncommon_words[i], uncommon_words_stemmed[i], '', 'None'))
 
-        # Se eliminan las palabras stem
-        #print("------------------Se revisan de uncommon_words las stem---------------------")
+        # Se revisa si la palabra fue parafraseada (steam)
         for obj in my_uncommon_words:
-            if obj.uncommon_word_stem in stemmed_text:
+            similar_word = next((w for w in my_similar_words if w.similar_word_stem == obj.uncommon_word_stem), None)
+            if (similar_word is not None):
                 obj.alerta = "naranja"
+                obj.similar_word = similar_word.similar_word
 
         for word in filtered_sentence:
-            #print(word)
             try:
                 sinonimos, sinonimos_stem = self.getSynoymsWordReference(word)
-                #print(sinonimos)
                 for sinonimo_stem in sinonimos_stem:
-                    if sinonimo_stem in stemmed_text:
+                    similar_word = next((w for w in my_similar_words if w.similar_word_stem == sinonimo_stem), None)
+                    if (similar_word is not None):
                         obj = [x for x in my_uncommon_words if x.uncommon_word == word]
                         obj[0].alerta = "amarillo"
+                        obj[0].similar_word = similar_word.similar_word
             except:
                 print("Error to get synonyms")
 
@@ -87,6 +100,7 @@ class FunctionsPlagiarism(BaseController):
             res_my_uncommon_data = {
                 'uncommon_word': my_uncommon.uncommon_word,
                 'alerta': my_uncommon.alerta,
+                'similar_word': my_uncommon.similar_word,
             }
             my_uncommon_response.append(res_my_uncommon_data)
         return my_uncommon_response

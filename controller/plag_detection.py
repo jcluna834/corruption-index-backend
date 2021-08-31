@@ -17,9 +17,11 @@ from controller import functions_plag
 from nltk.tokenize import sent_tokenize
 from nltk.corpus import stopwords
 from pymongo import MongoClient
-from settings import app, config
+from settings import app, config, JSONEncoder
 from flask import jsonify
 from bson.objectid import ObjectId
+from datetime import datetime
+
 
 client = MongoClient('localhost:27017')
 __collection__ = 'PlagiarismDetection'
@@ -58,13 +60,15 @@ class PlagiarismDetection(BaseController):
                 parag_text_clean = self.functions_plag_obj.getStringClean(paragraph_text)
                 highlight_clean = self.functions_plag_obj.getStringClean(highlight)
                 uncommon_words = list(self.functions_plag_obj.getUncommonWords(parag_text_clean,highlight_clean))
+                common_words = list(self.functions_plag_obj.getCommonWords(parag_text_clean,highlight_clean))
                 my_uncommon_words = self.functions_plag_obj.getHighlightPerformance(uncommon_words,parag_text_clean)
 
                 res_highlight_data = {
                     'content': highlight,
                     'levenshtein_distance': self.functions_plag_obj.getLevenshteinDistance(parag_text_clean, highlight_clean),
                     'similatiry_difflib': self.functions_plag_obj.getRatioSequenceMatcher(parag_text_clean, highlight_clean),
-                    'uncommon_words': uncommon_words,
+                    #'uncommon_words': uncommon_words,
+                    'common_words': common_words,
                     'my_uncommon_words': my_uncommon_words
                 }
                 highlight_response.append(res_highlight_data)
@@ -84,14 +88,14 @@ class PlagiarismDetection(BaseController):
             'response_elastic': response_es,
             'responsibleCode': getCurrentUser(),
             'announcementCode': getCurrentAnnouncement(),
-            'documentID': documentId
+            'documentID': documentId,
+            'AnalysisDate': datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         }
 
         # Save in collection MongoDB
         db = client.get_database(__collection__)
         collection = db.PlagiarismDetection
         collection.insert_one(super_res_data)
-
         analysis_response = super_res_data.copy()
         
         return analysis_response
@@ -105,7 +109,7 @@ class PlagiarismDetection(BaseController):
             ExceptionBuilder(BadRequest).error(HttpErrorCode.REQUIRED_FIELD, 'text').throw()
         
         analysis_response = self.similarityAnalisis(input_doc)
-        return Response(status_code=200, message='Return info match', data=analysis_response)
+        return Response(status_code=200, message='Return info match', data=JSONEncoder().encode(analysis_response))
         
 
     @app.route("/api/v1/plagiarism/getReportsSimilarity", methods=['GET'])

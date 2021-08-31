@@ -8,7 +8,8 @@ from mysql_connector import db
 
 class CommonPhrase(BaseModel):
     __tablename__ = 'commonPhrase'
-
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     description = db.Column('description', db.String(200), nullable=False)
     phrase = db.Column('phrase', db.Text(), nullable=False)
     announcementCode = db.Column('announcementCode', db.Integer, db.ForeignKey('announcement.id'), nullable=False)
