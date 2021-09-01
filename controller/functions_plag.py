@@ -38,14 +38,15 @@ class FunctionsPlagiarism(BaseController):
     # Retorna las palabras diferentes emtre dos cadenas - Retorna las diferentes en B
     def getUncommonWords(self, a, b):
         uncommon_words = [i for i in "".join(b).split() if i not in "".join(a).split()]
-        filtered_sentence = [w for w in uncommon_words if not w in stop_words]
+        filtered_sentence = [w for w in uncommon_words if not w.lower() in stop_words]
         return filtered_sentence
 
     # Retorna las palabras diferentes emtre dos cadenas - Retorna las diferentes en B
     def getCommonWords(self, a, b):
         common_words = [i for i in "".join(b).split() if i in "".join(a).split()]
-        filtered_sentence = [w for w in common_words if not w in stop_words]
-        return filtered_sentence
+        filtered_sentence = [w for w in common_words if not w.lower() in stop_words]
+        filtered_sentence_remove_d = list(dict.fromkeys(filtered_sentence))
+        return filtered_sentence_remove_d
 
     # Retorna una cadena de texto limpia, sin caracteres especiales
     def getStringClean(self, string):

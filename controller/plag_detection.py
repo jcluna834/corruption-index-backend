@@ -50,13 +50,13 @@ class PlagiarismDetection(BaseController):
     def similarityAnalisis(self, data, documentId='', entityId=''):
         #response_skl = []
         response_es = []
-        highlight_response = []
         my_uncommon_response = []
         # Se divide en párrafos el texto recibido
         token_text = sent_tokenize(data)
         for paragraph_text in token_text:
             # Se detecta similitud haciendo uso de ElasticSearh
             responseES = self.elasticsearhobj.searchByContent(paragraph_text)
+            highlight_response = []
             # Se evalua cada párrafo retornado
             for highlight in responseES['hits']['hits'][0]['highlight']['content']:
                 parag_text_clean = self.functions_plag_obj.getStringClean(paragraph_text)
