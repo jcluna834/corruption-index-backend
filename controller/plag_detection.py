@@ -81,7 +81,8 @@ class PlagiarismDetection(BaseController):
                 'similarity_score': responseES['hits']['hits'][0]['_score'],
                 'similarity_percentage': responseES['hits']['hits'][0]['_score'],
                 'doc_': responseES['hits']['hits'][0]['_source'],
-                'highlight': highlight_response
+                'highlight': highlight_response,
+                'status': 0
             }
             response_es.append(res_es_data)
 
@@ -176,3 +177,16 @@ class PlagiarismDetection(BaseController):
         except:
             return jsonify(status_code=500, message='Error to index document in Elastic!')
         return jsonify(status_code=200, success=True, message='Return info match', data="response_analysis")
+
+    @app.route("/api/v1/plagiarism/disableHighlight", methods=['POST'])
+    def disableHighlight():
+        data = request.get_json()
+        db = client.get_database(__collection__)
+        collection = db.PlagiarismDetection
+        responseCollection = collection.find({"_id":ObjectId(data['id'])})
+        collection.update(
+            { "_id":ObjectId(data['id']), "response_elastic.paragraph_text":data['text'] },
+            { "$set": { 'response_elastic.$.status' : -1}}
+        )
+        list_cur = list(responseCollection)
+        return jsonify(status_code=201, message='Report modify successfully!', data=list_cur)
