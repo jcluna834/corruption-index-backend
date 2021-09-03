@@ -181,3 +181,12 @@ class Document(BaseController):
         document = Document()
         doc = document.plag_dao.get_doc_info(id)
         return jsonify(status_code=201, message='Report returned successfully!', data=doc)
+
+
+    @app.route("/api/v1/plagiarism/getSimilarDocumentsInfo/", methods=['GET'])
+    def getSimilarDocumentsInfo():
+        documentsID = request.args.get('documents')
+        document = Document()
+        res = document.plag_dao.getSimilarDocumentsInfo(docsID=documentsID)
+        docs_info = dict(data=[d for d in res['data']], count=res['count'])
+        return jsonify(status_code=200, message='Documents returned successfully!', data=docs_info)

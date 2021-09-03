@@ -6,6 +6,7 @@ from model import Document, Announcement
 from math import ceil
 from sqlalchemy.sql import text
 from settings import config
+from sqlalchemy.sql.expression import bindparam
 
 class PlagiarismDAO(BaseService):
 
@@ -63,6 +64,31 @@ class PlagiarismDAO(BaseService):
         records = self.db.session.execute(stmt).fetchall()
         insertObject = []
         columnNames = [column for column in self.db.session.execute(stmt).keys()]
+        for record in records:
+            insertObject.append( dict( zip( columnNames , record ) ) )
+
+        return {
+            "data": insertObject,
+            "count": len(records)
+        }
+
+    def getSimilarDocumentsInfo(self, docsID):
+        """
+        Fetches documents' list.
+        :param docsID: id of documents
+        :return: List of documents
+        """
+        print(docsID)
+        params = { 'docs_id': docsID.split(','), }
+
+        stmt = text("select d.id as documentId, d.title, d.description as documentDescription, a.id as announcementCode, a.name as announcementName, d.fileName, d.status "
+            "from documents d join announcement a on d.announcementCode = a.id "
+            "where d.id in :docs_id")
+        stmt = stmt.bindparams(bindparam('docs_id', expanding=True))
+        
+        records = self.db.session.execute(stmt, params).fetchall()
+        insertObject = []
+        columnNames = [column for column in self.db.session.execute(stmt, params).keys()]
         for record in records:
             insertObject.append( dict( zip( columnNames , record ) ) )
 
