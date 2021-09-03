@@ -5,6 +5,7 @@ from model.document import Document
 from model.announcement import Announcement
 from model.analysisHistory import AnalysisHistory
 from model.commonPhrase import CommonPhrase
+from model.similarDocument import SimilarDocument
 
 # Import and register all the models here.
-__all__ = ["Document", "Announcement", "AnalysisHistory", "CommonPhrase"]
+__all__ = ["Document", "Announcement", "AnalysisHistory", "CommonPhrase", "SimilarDocument"]
