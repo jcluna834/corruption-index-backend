@@ -56,6 +56,46 @@ class ElasticSearchFunction(BaseController):
             }
         )
 
+    # Realiza una búsqueda por contenido retornando elrimer elemento de la misma
+    def searchBetweenDocs(self, query, similarDocumentID): #TODO - garantizar la búsqueda solo con 1 doc
+        return self.es.search(
+            index="documentos",
+            body={
+                "from": 0, "size": 1,
+                "query": {
+
+                    "bool": {
+                        "must": [
+                            {
+                            "match": {
+                                "content": query
+                            }
+                            },
+                            {
+                            "match": {
+                                "id": similarDocumentID
+                            }
+                            }
+                        ]
+                    }
+                },
+                "_source": {
+                    "includes": ["id", "title"]
+                },
+                "highlight": {
+                    "pre_tags": [""],
+                    "post_tags": [""],
+                    "fields": {
+                        "content": {
+                            "fragment_size": 200,
+                            "number_of_fragments": 1,
+                            "order": "score"
+                        }
+                    }
+                }
+            }
+        )
+
     # Realiza una búsqueda
     async def search(self, query):
         return await self.es.search(

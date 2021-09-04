@@ -26,3 +26,8 @@ class AnalysisHistory(BaseController):
         docs_info = dict(data=[d for d in res['data']], count=res['count'])
         return Response(data=docs_info)
 
+    @app.route("/api/v1/plagiarism/getReportAnalysis/<collectionID>", methods=['GET'])
+    def getReportAnalysis(collectionID):
+        analysisHistoryController = AnalysisHistory()
+        analysisHistory = analysisHistoryController.analyisHistory_dao.analysisHistoryByCollectionCode(collectionID)
+        return jsonify(status_code=201, message='Reports returned successfully!', data=analysisHistory)

@@ -19,7 +19,7 @@ class SimilarDocumentDAO(BaseService):
         """
 
         stmt = text("select sd.id, d.id as documentId, d.title, d.description as documentDescription, a.id as announcementCode, "
-            "a.name as announcementName, d.fileName, sd.status as similarDocStatus "
+            "a.name as announcementName, d.fileName, sd.status as similarDocStatus, ah.collectionCode "
             "from similardocument sd  "
             "join documents d on sd.similarDocumentCode = d.id "
             "join announcement a on d.announcementCode = a.id  "
@@ -37,3 +37,14 @@ class SimilarDocumentDAO(BaseService):
             "data": insertObject,
             "count": len(records)
         }
+
+    def updateStatus(self, id, status):
+        """
+        Update an document.
+        :param data: document's properties as json.
+        :return:
+        """
+        document = SimilarDocument.query.filter_by(id=id).first()
+        document.status = status
+        self.db.session.commit()
+        return document

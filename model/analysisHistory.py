@@ -13,6 +13,7 @@ class AnalysisHistory(BaseModel):
     documentCode = db.Column('documentCode', db.String(200), db.ForeignKey('documents.id'), nullable=False)
     document = db.relationship("Document", backref=db.backref("documents", uselist=False))
     status = db.Column('status', db.Integer, nullable=False)
+    analysisTypeCode = db.Column('analysisTypeCode', db.Integer, nullable=False)
     collectionCode = db.Column('collectionCode', db.String(200))
 
     # Table metadata can be specified as follows -
@@ -30,5 +31,6 @@ class AnalysisHistory(BaseModel):
             'documentCode': self.documentCode,
             'collectionCode': self.collectionCode,
             'created_date': self.created_date.strftime("%m/%d/%Y, %H:%M:%S"),
-            'status': self.status
+            'status': self.status,
+            'analysisTypeCode': self.analysisTypeCode
         }
