@@ -129,13 +129,14 @@ class AnalysisHistoryDAO(BaseService):
             "count": len(records)
         }
 
-    def create_analysisHistory(self, documentId, status, analysisType, collectionId=""):
+    def create_analysisHistory(self, documentId, status, analysisType, similarDocumentCode="", collectionId=""):
         """
         Creates an analysisHistory.
         :param data: analysisHistory's properties as json.
         :return:
         """
-        analysisHistory = AnalysisHistory(documentCode=documentId, status=status, analysisTypeCode=analysisType, collectionCode=collectionId)
+        analysisHistory = AnalysisHistory(documentCode=documentId, status=status, 
+            analysisTypeCode=analysisType, similarDocumentCode=similarDocumentCode, collectionCode=collectionId)
         self.db.session.add(analysisHistory)
         self.db.session.commit()
         return analysisHistory

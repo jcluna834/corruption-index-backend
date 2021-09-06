@@ -11,7 +11,9 @@ class AnalysisHistory(BaseModel):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     documentCode = db.Column('documentCode', db.String(200), db.ForeignKey('documents.id'), nullable=False)
-    document = db.relationship("Document", backref=db.backref("documents", uselist=False))
+    #historyDocumentAnalysis = db.relationship("Document", primaryjoin = "analysisHistory.documentCode == documents.id", backref=db.backref("documents", uselist=False))
+    similarDocumentCode = db.Column('similarDocumentCode', db.String(200), db.ForeignKey('documents.id'), nullable=False)
+    #historyDocumentSimilar = db.relationship("Document", primaryjoin = "analysisHistory.similarDocumentCode == documents.id", backref=db.backref("similarDocumentsHistory", uselist=False))
     status = db.Column('status', db.Integer, nullable=False)
     analysisTypeCode = db.Column('analysisTypeCode', db.Integer, nullable=False)
     collectionCode = db.Column('collectionCode', db.String(200))

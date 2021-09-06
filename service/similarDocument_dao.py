@@ -19,11 +19,12 @@ class SimilarDocumentDAO(BaseService):
         """
 
         stmt = text("select sd.id, d.id as documentId, d.title, d.description as documentDescription, a.id as announcementCode, "
-            "a.name as announcementName, d.fileName, sd.status as similarDocStatus, ah.collectionCode "
-            "from similardocument sd  "
-            "join documents d on sd.similarDocumentCode = d.id "
-            "join announcement a on d.announcementCode = a.id  "
-            "join analysishistory ah on sd.analysisHistoryCode = ah.id  "
+            "a.name as announcementName, d.fileName, sd.status as similarDocStatus, ah2.collectionCode "
+            "from analysishistory ah "
+            "join documents d on ah.documentCode = d.id "
+            "join announcement a on d.announcementCode = a.id "
+            "join similardocument sd on d.id = sd.analysisDocumentCode "
+            "left join analysishistory ah2 on sd.similarDocumentCode = ah2.similarDocumentCode "
             "where ah.collectionCode = :collectionCode").\
             bindparams(collectionCode=collectionID)
         
@@ -37,6 +38,28 @@ class SimilarDocumentDAO(BaseService):
             "data": insertObject,
             "count": len(records)
         }
+
+    def existsSimilarDoc(self, analysisDocumentCode, similarDocumentCode):
+        """
+        get especific document' .
+        :param analysisDocumentCode
+        :param similarDocumentCode
+        :return: boll if exits similarDocument
+        """
+        query = {'analysisDocumentCode': analysisDocumentCode, 'similarDocumentCode':similarDocumentCode}
+        exists = SimilarDocument.query.filter_by(**query).first() is not None
+        return exists
+
+    def createSimilarDocuments(self, analysisDocumentCode, similarDocumentCode, status=""):
+        """
+        Creates an analysisHistory.
+        :param data: analysisHistory's properties as json.
+        :return:
+        """
+        similarDocument = SimilarDocument(analysisDocumentCode=analysisDocumentCode, similarDocumentCode=similarDocumentCode, status=status)
+        self.db.session.add(similarDocument)
+        self.db.session.commit()
+        return similarDocument
 
     def updateStatus(self, id, status):
         """

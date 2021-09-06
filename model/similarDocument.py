@@ -11,18 +11,17 @@ class SimilarDocument(BaseInitModel):
     __tablename__ = 'similarDocument'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    analysisHistoryCode = db.Column('analysisHistoryCode', db.Integer, db.ForeignKey('analysisHistory.id'), nullable=False)
-    analysisHistory = db.relationship("AnalysisHistory", backref=db.backref("analysisHistorySimilarDoc", uselist=False))
-
+    analysisDocumentCode = db.Column('analysisDocumentCode', db.Integer, db.ForeignKey('documents.id'), nullable=False)
+    #similarDocumentAnalysis = db.relationship("Document",  foreign_keys=["analysisDocumentCode"], backref=db.backref("analysisDocumentCode", uselist=False))
     similarDocumentCode = db.Column('similarDocumentCode', db.String(200), db.ForeignKey('documents.id'), nullable=False)
-    document = db.relationship("Document", backref=db.backref("similarDocuments", uselist=False))
+    #similarDocumentSimilar = db.relationship("Document", foreign_keys=["similarDocumentCode"], backref=db.backref("similarDocuments", uselist=False))
 
     status = db.Column('status', db.Integer, nullable=False)
 
     # Table metadata can be specified as follows -
     __table_args__ = (
-        db.UniqueConstraint('analysisHistoryCode', 'similarDocumentCode'),
-        db.Index(BaseInitModel.create_index(__tablename__, 'analysisHistoryCode', 'similarDocumentCode'), 'analysisHistoryCode', 'similarDocumentCode'),
+        db.UniqueConstraint('analysisDocumentCode', 'similarDocumentCode'),
+        db.Index(BaseInitModel.create_index(__tablename__, 'analysisDocumentCode', 'similarDocumentCode'), 'analysisDocumentCode', 'similarDocumentCode'),
     )
 
     def __repr__(self):
@@ -31,7 +30,7 @@ class SimilarDocument(BaseInitModel):
     def to_dict(self, *args, **kwargs):
         return {
             'id': self.id,
+            'analysisDocumentCode': self.analysisDocumentCode,
             'similarDocumentCode': self.similarDocumentCode,
-            'analysisHistoryCode': self.analysisHistoryCode,
             'status': self.status
         }
