@@ -23,6 +23,7 @@ from settings import app, config, JSONEncoder
 from flask import jsonify
 from bson.objectid import ObjectId
 from datetime import datetime
+from enum import Enum
 
 
 client = MongoClient('localhost:27017')
@@ -39,6 +40,13 @@ def getCurrentUser():
 
 def getCurrentAnnouncement():
     return config['ANNOUNCEMENTID']
+
+
+class AnalysisType(Enum):
+    Global = 1
+    Entidad = 2
+    Convocatoria = 3
+    EntreDocumentos = 4
 
 class PlagiarismDetection(BaseController):
     plag_detector: PlagiarismDetector = inject(PlagiarismDetector)
@@ -58,7 +66,7 @@ class PlagiarismDetection(BaseController):
         token_text = sent_tokenize(data)
         for paragraph_text in token_text:
             # Se detecta similitud haciendo uso de ElasticSearh
-            if(analysisType == 0): #analysis global
+            if(analysisType != AnalysisType.EntreDocumentos): #analysis global
                 responseES = self.elasticsearhobj.searchByContent(paragraph_text)
             else: #analysis entre 2 documentos
                 responseES = self.elasticsearhobj.searchBetweenDocs(paragraph_text, similarDocumentID)
@@ -67,6 +75,7 @@ class PlagiarismDetection(BaseController):
             # Se evalua cada párrafo retornado
             for highlight in responseES['hits']['hits'][0]['highlight']['content']:
                 parag_text_clean = self.functions_plag_obj.getStringClean(paragraph_text)
+                my_words = self.functions_plag_obj.getParagraphTokens(parag_text_clean)
                 highlight_clean = self.functions_plag_obj.getStringClean(highlight)
                 uncommon_words = list(self.functions_plag_obj.getUncommonWords(parag_text_clean,highlight_clean))
                 common_words = list(self.functions_plag_obj.getCommonWords(parag_text_clean,highlight_clean))
@@ -74,11 +83,12 @@ class PlagiarismDetection(BaseController):
 
                 res_highlight_data = {
                     'content': highlight,
-                    'levenshtein_distance': self.functions_plag_obj.getLevenshteinDistance(parag_text_clean, highlight_clean),
-                    'similatiry_difflib': self.functions_plag_obj.getRatioSequenceMatcher(parag_text_clean, highlight_clean),
-                    #'uncommon_words': uncommon_words,
+                    #'levenshtein_distance': self.functions_plag_obj.getLevenshteinDistance(parag_text_clean, highlight_clean),
+                    #'similatiry_difflib': self.functions_plag_obj.getRatioSequenceMatcher(parag_text_clean, highlight_clean),
+                    'my_words': my_words,
                     'common_words': common_words,
-                    'my_uncommon_words': my_uncommon_words
+                    'my_uncommon_words': my_uncommon_words,
+                    'phrase_similarity_percentage': self.functions_plag_obj.getPercentageSimilitud(my_words, common_words, my_uncommon_words)
                 }
                 highlight_response.append(res_highlight_data)
 
@@ -95,11 +105,9 @@ class PlagiarismDetection(BaseController):
             similarDocuments.append(responseES['hits']['hits'][0]['_source']['id']) if responseES['hits']['hits'][0]['_source']['id'] not in similarDocuments else similarDocuments
 
         #Se agregan los documentos similares
-        print("--------------------------------------")
         plagiarismDetection = PlagiarismDetection()
-        if(analysisType == 0 and documentId != ''): #analysis global
+        if(analysisType == AnalysisType.Global and documentId != ''): #analysis global
             for similarDocID in similarDocuments:
-                print("docID: " + similarDocID)
                 exists = plagiarismDetection.similarDocument_dao.existsSimilarDoc(documentId, similarDocID)
                 if (not exists):
                     plagiarismDetection.similarDocument_dao.createSimilarDocuments(documentId, similarDocID)
@@ -131,8 +139,7 @@ class PlagiarismDetection(BaseController):
         if input_doc is None:
             ExceptionBuilder(BadRequest).error(HttpErrorCode.REQUIRED_FIELD, 'text').throw()
         
-        analysisType = 0
-        analysis_response = self.similarityAnalisis(input_doc, analysisType)
+        analysis_response = self.similarityAnalisis(input_doc, AnalysisType.Global)
         return Response(status_code=200, message='Return info match', data=JSONEncoder().encode(analysis_response))
         
 
@@ -175,13 +182,11 @@ class PlagiarismDetection(BaseController):
             plagiarismDetection = PlagiarismDetection()
             doc = plagiarismDetection.plag_dao.get_doc(data['id'])
             #Se crea el registro histórico de análisis
-            analysisType = 0 #Análisis global
-            analysisHistory = plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['id'], 0, analysisType)
+            analysisHistory = plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['id'], 0, AnalysisType.Global.value)
             #Se obtiene el entity_code
             announcement = plagiarismDetection.announcement_dao.get_announcement(doc['announcementCode'])
             #Se ejecuta el proceso de análsis de similitud
-            analysisType = 0
-            response_analysis = plagiarismDetection.similarityAnalisis(doc['content'], analysisType, 
+            response_analysis = plagiarismDetection.similarityAnalisis(doc['content'], AnalysisType.Global, 
                 documentId=data['id'], entityId=announcement['entity_code']) #fijar a doc['content']
             #Status del documento a analizado
             plagiarismDetection.plag_dao.updateStatus(data['id'], 1) 
@@ -201,9 +206,8 @@ class PlagiarismDetection(BaseController):
             doc = plagiarismDetection.plag_dao.get_doc(data['analysisDocumentCode'])
 
             #Se crea el registro histórico de análisis
-            analysisType = 4 #Análisis entre documentos
             analysisHistory = plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['analysisDocumentCode'], 0, 
-                analysisType, similarDocumentCode=data['similarDocumentCode'])
+                AnalysisType.EntreDocumentos.value, similarDocumentCode=data['similarDocumentCode'])
 
             #Status del similar documento a analizado
             plagiarismDetection.similarDocument_dao.updateStatus(data['id'], 1) 
@@ -211,8 +215,7 @@ class PlagiarismDetection(BaseController):
             #Se obtiene el entity_code
             announcement = plagiarismDetection.announcement_dao.get_announcement(doc['announcementCode'])
             #Se ejecuta el proceso de análsis de similitud
-            analysisType = 1
-            response_analysis = plagiarismDetection.similarityAnalisis(doc['content'], analysisType, 
+            response_analysis = plagiarismDetection.similarityAnalisis(doc['content'], AnalysisType.EntreDocumentos, 
                 similarDocumentID=data['similarDocumentCode'],  documentId=data['analysisDocumentCode'], 
                 entityId=announcement['entity_code']) #fijar a doc['content']
 
@@ -230,8 +233,7 @@ class PlagiarismDetection(BaseController):
             print("inicio")
             plagiarismDetection = PlagiarismDetection()
             data = request.get_json()
-            analysisType = 0 #Análisis global
-            plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['id'], 0, analysisType)
+            plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['id'], 0, AnalysisType.Global.value)
             announcement = plagiarismDetection.announcement_dao.get_announcement(data['announcementCode'])
             import time
             time.sleep(20)

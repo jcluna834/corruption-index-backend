@@ -14,6 +14,7 @@ from nltk.stem import SnowballStemmer
 from model.uncommon_word import Uncommon_word, Similar_word
 from nltk import word_tokenize
 import lxml
+from enum import Enum
 
 #Se descarga sinonimos al inicio
 '''import nltk
@@ -22,6 +23,10 @@ nltk.download('stopwords')
 stemmer = SnowballStemmer('spanish')
 stop_words = set(stopwords.words('spanish'))
 
+class Alert(Enum):
+    RED = 1
+    ORANGE = 0.75
+    YELLOW = 0.5
 
 class FunctionsPlagiarism(BaseController):
 
@@ -31,9 +36,28 @@ class FunctionsPlagiarism(BaseController):
         b = b.split(" ")
         return pylev.levenshtein(a, b)
 
+    
+    # Retorna el valor del ratio similitud entre dos cadenas
+    def getPercentageSimilitud(self, parag_token, common_words, uncommon_words):
+        total_parag_token = len(parag_token)
+        calc_alert_red = len(common_words) * float(Alert.RED.value)
+        calc_alert_orange = [w for w in uncommon_words if w['alerta'] == 'naranja']
+        calc_alert_yellow = [w for w in uncommon_words if w['alerta'] == 'amarillo']
+        calc_alert_orange = len(calc_alert_orange) * float(Alert.ORANGE.value)
+        calc_alert_yellow = len(calc_alert_yellow) * float(Alert.YELLOW.value)
+        value_similarity = (calc_alert_red + calc_alert_orange + calc_alert_yellow)
+        percentage_similarity = (value_similarity * 100) / total_parag_token
+        return round(percentage_similarity, 2)
+
     # Retorna el valor del ratio similitud entre dos cadenas
     def getRatioSequenceMatcher(self, a, b):
         return SequenceMatcher(None, a, b).ratio()
+
+    #retorna el parrafo en tokens luego de eliminar las stop_words
+    def getParagraphTokens(self, parag_text_clean):
+        words = [i for i in "".join(parag_text_clean).split()]
+        filtered_sentence = [w for w in words if not w.lower() in stop_words]
+        return filtered_sentence
 
     # Retorna las palabras diferentes emtre dos cadenas - Retorna las diferentes en B
     def getUncommonWords(self, a, b):

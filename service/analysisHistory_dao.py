@@ -136,7 +136,9 @@ class AnalysisHistoryDAO(BaseService):
         :return:
         """
         analysisHistory = AnalysisHistory(documentCode=documentId, status=status, 
-            analysisTypeCode=analysisType, similarDocumentCode=similarDocumentCode, collectionCode=collectionId)
+            analysisTypeCode=analysisType, collectionCode=collectionId)
+        if(similarDocumentCode):
+            analysisHistory.similarDocumentCode = similarDocumentCode
         self.db.session.add(analysisHistory)
         self.db.session.commit()
         return analysisHistory
