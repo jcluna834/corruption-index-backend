@@ -30,8 +30,8 @@ class SimilarDocumentController(BaseController):
 
     @app.route("/api/v1/plagiarism/getSimilarDocumentsInfo/", methods=['GET'])
     def getSimilarDocumentsInfo():
-        collectionID = request.args.get('collectionID')
+        documentID = request.args.get('documentID')
         document = SimilarDocumentController()
-        res = document.similarDocument_dao.getSimilarDocumentsInfo(collectionID)
+        res = document.similarDocument_dao.getSimilarDocumentsInfo(documentID)
         docs_info = dict(data=[d for d in res['data']], count=res['count'])
         return jsonify(status_code=200, message='Documents returned successfully!', data=docs_info)

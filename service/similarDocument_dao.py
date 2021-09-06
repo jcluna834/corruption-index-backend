@@ -11,7 +11,7 @@ from sqlalchemy.sql.expression import bindparam
 class SimilarDocumentDAO(BaseService):
 
 
-    def getSimilarDocumentsInfo(self, collectionID):
+    def getSimilarDocumentsInfo(self, analysisDocumentID):
         """
         Fetches documents' list.
         :param docsID: id of documents
@@ -19,14 +19,13 @@ class SimilarDocumentDAO(BaseService):
         """
 
         stmt = text("select sd.id, d.id as documentId, d.title, d.description as documentDescription, a.id as announcementCode, "
-            "a.name as announcementName, d.fileName, sd.status as similarDocStatus, ah2.collectionCode "
-            "from analysishistory ah "
-            "join documents d on ah.documentCode = d.id "
-            "join announcement a on d.announcementCode = a.id "
-            "join similardocument sd on d.id = sd.analysisDocumentCode "
-            "left join analysishistory ah2 on sd.similarDocumentCode = ah2.similarDocumentCode "
-            "where ah.collectionCode = :collectionCode").\
-            bindparams(collectionCode=collectionID)
+            "a.name as announcementName, d.fileName, sd.status as similarDocStatus, ah.collectionCode "
+            "from similardocument sd "
+            "left join documents d on sd.similarDocumentCode = d.id "
+            "left join announcement a on d.announcementCode = a.id "
+            "left join analysishistory ah on sd.similarDocumentCode = ah.similarDocumentCode "
+            "where sd.analysisDocumentCode = :analysisDocumentCode").\
+            bindparams(analysisDocumentCode=analysisDocumentID)
         
         records = self.db.session.execute(stmt).fetchall()
         insertObject = []

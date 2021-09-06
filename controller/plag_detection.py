@@ -204,6 +204,9 @@ class PlagiarismDetection(BaseController):
             analysisType = 4 #Análisis entre documentos
             analysisHistory = plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['analysisDocumentCode'], 0, 
                 analysisType, similarDocumentCode=data['similarDocumentCode'])
+
+            #Status del similar documento a analizado
+            plagiarismDetection.similarDocument_dao.updateStatus(data['id'], 1) 
             
             #Se obtiene el entity_code
             announcement = plagiarismDetection.announcement_dao.get_announcement(doc['announcementCode'])
@@ -213,8 +216,6 @@ class PlagiarismDetection(BaseController):
                 similarDocumentID=data['similarDocumentCode'],  documentId=data['analysisDocumentCode'], 
                 entityId=announcement['entity_code']) #fijar a doc['content']
 
-            #Status del similar documento a analizado
-            plagiarismDetection.similarDocument_dao.updateStatus(data['id'], 1) 
             #Status del histórico 
             #TODO obtener el id de json
             plagiarismDetection.analyisHistory_dao.edit_analysisHistory(analysisHistory.id, 1, response_analysis["_id"])
