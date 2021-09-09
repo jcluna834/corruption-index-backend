@@ -108,7 +108,7 @@ class Document(BaseController):
         :return:
         """
         res = self.plag_dao.get_docs_info(page=int(request.args.get("page", 1)),
-                                     per_page=int(request.args.get("per_page", 10)), all='all' in request.args)
+                                    per_page=int(request.args.get("per_page", 10)), all='all' in request.args)
         
         docs_info = dict(data=[d for d in res['data']], count=res['count'])
         return Response(data=docs_info)

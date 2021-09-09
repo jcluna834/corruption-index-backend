@@ -11,7 +11,7 @@ class SimilarDocument(BaseInitModel):
     __tablename__ = 'similarDocument'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    analysisDocumentCode = db.Column('analysisDocumentCode', db.Integer, db.ForeignKey('documents.id'), nullable=False)
+    analysisDocumentCode = db.Column('analysisDocumentCode', db.String(200), db.ForeignKey('documents.id'), nullable=False)
     #similarDocumentAnalysis = db.relationship("Document",  foreign_keys=["analysisDocumentCode"], backref=db.backref("analysisDocumentCode", uselist=False))
     similarDocumentCode = db.Column('similarDocumentCode', db.String(200), db.ForeignKey('documents.id'), nullable=False)
     #similarDocumentSimilar = db.relationship("Document", foreign_keys=["similarDocumentCode"], backref=db.backref("similarDocuments", uselist=False))
