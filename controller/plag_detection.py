@@ -211,7 +211,6 @@ class PlagiarismDetection(BaseController):
             response_analysis = plagiarismDetection.similarityAnalisis(doc['content'], AnalysisType.Global, 
                 documentId=data['id'], entityId=announcement['entity_code']) #fijar a doc['content']
             #Status del histórico 
-            #TODO obtener el id de json
             collectionID = str(ObjectId(response_analysis["_id"]))
             plagiarismDetection.analyisHistory_dao.edit_analysisHistory(analysisHistory.id, 1, collectionID)
         except:
@@ -241,8 +240,8 @@ class PlagiarismDetection(BaseController):
                 entityId=announcement['entity_code']) #fijar a doc['content']
 
             #Status del histórico 
-            #TODO obtener el id de json
-            plagiarismDetection.analyisHistory_dao.edit_analysisHistory(analysisHistory.id, 1, response_analysis["_id"])
+            collectionID = str(ObjectId(response_analysis["_id"]))
+            plagiarismDetection.analyisHistory_dao.edit_analysisHistory(analysisHistory.id, 1, collectionID)
         except:
             return jsonify(status_code=500, message='Error to index document in Elastic!')
 

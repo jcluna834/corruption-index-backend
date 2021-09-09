@@ -160,7 +160,8 @@ class Document(BaseController):
     @app.route('/api/v1/plagiarism/downloadFile/<path:filename>', methods=['GET', 'POST'])
     def download(filename):
         path = os.path.join(config['UPLOAD_FOLDER'], filename)
-        return send_file(path_or_file=path, as_attachment=True)
+        return send_file(path, as_attachment=True)
+        #return send_file(path_or_file=path, as_attachment=True)
 
     @app.route("/api/v1/plagiarism/indexDocument", methods=['POST'])
     def indexDocument():
