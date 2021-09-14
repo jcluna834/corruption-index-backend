@@ -23,7 +23,7 @@ class SimilarDocumentDAO(BaseService):
             "from similardocument sd "
             "left join documents d on sd.similarDocumentCode = d.id "
             "left join announcement a on d.announcementCode = a.id "
-            "left join analysishistory ah on sd.similarDocumentCode = ah.similarDocumentCode "
+            "left join analysishistory ah on sd.similarDocumentCode = ah.similarDocumentCode and ah.documentCode = :analysisDocumentCode "
             "where sd.analysisDocumentCode = :analysisDocumentCode").\
             bindparams(analysisDocumentCode=analysisDocumentID)
         

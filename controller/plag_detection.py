@@ -67,7 +67,10 @@ class PlagiarismDetection(BaseController):
         for paragraph_text in token_text:
             # Se detecta similitud haciendo uso de ElasticSearh
             if(analysisType != AnalysisType.EntreDocumentos): #analysis global
-                responseES = self.elasticsearhobj.searchByContent(paragraph_text)
+                if(documentId == ''):
+                    responseES = self.elasticsearhobj.searchByContent(paragraph_text, documentId)
+                else:
+                    responseES = self.elasticsearhobj.searchByContentExcluyeDocID(paragraph_text, documentId)
             else: #analysis entre 2 documentos
                 responseES = self.elasticsearhobj.searchBetweenDocs(paragraph_text, similarDocumentID)
             highlight_response = []

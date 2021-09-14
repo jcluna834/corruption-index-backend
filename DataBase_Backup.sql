@@ -47,6 +47,22 @@ INSERT INTO plagiarism_detection.analysistype (id, name, description) VALUES(2, 
 INSERT INTO plagiarism_detection.analysistype (id, name, description) VALUES(3, 'Convocatoria', 'nm√°lisis de similitud contra los documentos pertenecientes a la Convocatoria');
 INSERT INTO plagiarism_detection.analysistype (id, name, description) VALUES(4, 'Entre Documentos', 'nm√°lisis de similitud entre dos documentos');
 
+
+#-------------------------------------------------------------------
+#TABLA documentstatus
+CREATE TABLE `documentstatus` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(75) NOT NULL,
+  `description` varchar(200) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+#REGISTERS documentstatus
+INSERT INTO plagiarism_detection.documentstatus (id, name, description) VALUES(1, 'Subido', 'Documento subido a la BD y almacenado fÌsicamente');
+INSERT INTO plagiarism_detection.documentstatus (id, name, description) VALUES(2, 'Analizado', 'Documento con an·lisis de similitud');
+INSERT INTO plagiarism_detection.documentstatus (id, name, description) VALUES(3, 'Indexado', 'Documento indexado en Elastic Search');
+
+
 #-------------------------------------------------------------------
 #TABLA commonphrase
 CREATE TABLE `commonphrase` (
@@ -80,11 +96,15 @@ CREATE TABLE `documents` (
   `fileName` varchar(200) NOT NULL,
   `responsibleCode` int(11) DEFAULT NULL,
   `announcementCode` int(11) NOT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 0,
+  `status` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `title` (`title`,`is_deleted`),
-  KEY `documents|title|is_deleted` (`title`,`is_deleted`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  KEY `documents|title|is_deleted` (`title`,`is_deleted`),
+  KEY `documents_announcement_fk` (`announcementCode`),
+  KEY `documents_documentstatus_fk` (`status`),
+  CONSTRAINT `documents_announcement_fk` FOREIGN KEY (`announcementCode`) REFERENCES `announcement` (`id`),
+  CONSTRAINT `documents_documentstatus_fk` FOREIGN KEY (`status`) REFERENCES `documentstatus` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
 #REGISTERS 
 

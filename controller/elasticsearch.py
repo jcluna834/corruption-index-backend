@@ -30,8 +30,49 @@ class ElasticSearchFunction(BaseController):
     async def index(self):
         return await self.es.cluster.health()
 
-    # Realiza una búsqueda por contenido retornando elrimer elemento de la misma
-    def searchByContent(self, query):
+    # Realiza una búsqueda por contenido y excluyendo el actualdocument retornando el primer elemento de la misma
+    def searchByContentExcluyeDocID(self, query, documentID):
+        return self.es.search(
+            index="documentos",
+            body={
+                "from": 0, "size": 1,
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "match": {
+                                    "content": query
+                                }
+                            }
+                        ],
+                        "must_not": [
+                            {
+                                "match": {
+                                    "id": documentID
+                                }
+                            }
+                        ]
+                    }
+                },
+                "_source": {
+                    "includes": ["id", "title"]
+                },
+                "highlight": {
+                    "pre_tags": [""],
+                    "post_tags": [""],
+                    "fields": {
+                        "content": {
+                            "fragment_size": 500,
+                            "number_of_fragments": 1,
+                            "order": "score"
+                        }
+                    }
+                }
+            }
+        )
+
+    # Realiza una búsqueda por contenido retornando el primer elemento de la misma
+    def searchByContent_(self, query):
         return self.es.search(
             index="documentos",
             body={
@@ -47,7 +88,7 @@ class ElasticSearchFunction(BaseController):
                     "post_tags": [""],
                     "fields": {
                         "content": {
-                            "fragment_size": 200,
+                            "fragment_size": 500,
                             "number_of_fragments": 1,
                             "order": "score"
                         }
@@ -87,7 +128,7 @@ class ElasticSearchFunction(BaseController):
                     "post_tags": [""],
                     "fields": {
                         "content": {
-                            "fragment_size": 200,
+                            "fragment_size": 500,
                             "number_of_fragments": 1,
                             "order": "score"
                         }
