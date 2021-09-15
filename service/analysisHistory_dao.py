@@ -4,7 +4,6 @@ __email__ = "jcluna834@gmail.com"
 from service.base import BaseService
 from model import AnalysisHistory
 from math import ceil
-from settings import config
 from sqlalchemy.sql import text
 
 class AnalysisHistoryDAO(BaseService):
@@ -115,7 +114,8 @@ class AnalysisHistoryDAO(BaseService):
             "join documents d on a.documentCode = d.id  "
             "join announcement an on d.announcementCode = an.id "
             "join analysistype at on a.analysisTypeCode = at.id "
-            "where a.is_deleted = 0 and a.status = 1 and a.documentCode=:documentCode").\
+            "where a.is_deleted = 0 and a.status = 1 and a.documentCode=:documentCode "
+            "order by a.analysisTypeCode, a.created_date DESC ").\
             bindparams(documentCode=documentID)
             
         records = self.db.session.execute(stmt).fetchall()
@@ -166,3 +166,10 @@ class AnalysisHistoryDAO(BaseService):
         analysisHistory.status = status
         self.db.session.commit()
         return analysisHistory
+
+    def cleanAnalysisHistory(self):
+        deleted_objects = AnalysisHistory.__table__.delete().where(AnalysisHistory.status == 0)
+        self.db.session.execute(deleted_objects)
+        self.db.session.commit()
+        '''self.db.session.query(AnalysisHistory).filter(AnalysisHistory.status==0).delete()
+        self.db.session.commit()'''

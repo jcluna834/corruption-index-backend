@@ -72,6 +72,17 @@ class CommonPhraseDAO(BaseService):
         self.db.session.commit()
         return announcement
 
+    def existsCommonPhrase(self, phrase, announcementId):
+        """
+        get especific document' .
+        :param phrase
+        :param announcementId
+        :return: boll if exits CommonPhrase
+        """
+        query = {'phrase': phrase, 'announcementCode':announcementId, 'is_deleted': 0}
+        exists = CommonPhrase.query.filter_by(**query).first() 
+        return exists
+
     def deleteCommonPhrase(self, commonPhraseId):
         deleted_objects = CommonPhrase.__table__.delete().where(CommonPhrase.id.in_([commonPhraseId]))
         self.db.session.execute(deleted_objects)

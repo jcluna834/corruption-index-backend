@@ -37,3 +37,4 @@ requests==2.26.0
 pymongo==3.12
 PyPDF2==1.26.0
 pdfplumber==0.5.28
+APScheduler==3.7.0

@@ -12,10 +12,10 @@ from service.plag_dao import PlagiarismDAO
 from service.analysisHistory_dao import AnalysisHistoryDAO
 from service.announcement_dao import AnnouncementDAO
 from service.similarDocument_dao import SimilarDocumentDAO
+from service.commonPhrase_dao import CommonPhraseDAO
 from util.constants.error_codes import HttpErrorCode
 from util.error_handlers.exceptions import ExceptionBuilder, BadRequest
-from controller import elasticsearch
-from controller import functions_plag
+from controller import elasticsearch, sendAlert, functions_plag
 from nltk.tokenize import sent_tokenize
 from nltk.corpus import stopwords
 from pymongo import MongoClient
@@ -24,7 +24,6 @@ from flask import jsonify
 from bson.objectid import ObjectId
 from datetime import datetime
 from enum import Enum
-
 
 client = MongoClient('localhost:27017')
 __collection__ = 'PlagiarismDetection'
@@ -51,13 +50,15 @@ class AnalysisType(Enum):
 class PlagiarismDetection(BaseController):
     plag_detector: PlagiarismDetector = inject(PlagiarismDetector)
     elasticsearhobj = elasticsearch.ElasticSearchFunction()
+    sendAlertObj = sendAlert.SendAlertFunction()
     functions_plag_obj = functions_plag.FunctionsPlagiarism()
     plag_dao: PlagiarismDAO = inject(PlagiarismDAO)
     analyisHistory_dao: AnalysisHistoryDAO = inject(AnalysisHistoryDAO)
     announcement_dao: AnnouncementDAO = inject(AnnouncementDAO)
     similarDocument_dao: SimilarDocumentDAO = inject(SimilarDocumentDAO)
+    commonPhrase_dao: CommonPhraseDAO = inject(CommonPhraseDAO)
 
-    def similarityAnalisis(self, data, analysisType, similarDocumentID= '', documentId='', entityId=''):
+    def similarityAnalisis(self, data, analysisType, similarDocumentID= '', documentId='', entityId='', announcementId=''):
         #response_skl = []
         response_es = []
         my_uncommon_response = []
@@ -65,55 +66,15 @@ class PlagiarismDetection(BaseController):
         # Se divide en párrafos el texto recibido
         token_text = sent_tokenize(data)
         for paragraph_text in token_text:
-            # Se detecta similitud haciendo uso de ElasticSearh
-            if(analysisType != AnalysisType.EntreDocumentos): #analysis global
-                if(documentId == ''):
-                    responseES = self.elasticsearhobj.searchByContent(paragraph_text, documentId)
-                else:
-                    responseES = self.elasticsearhobj.searchByContentExcluyeDocID(paragraph_text, documentId)
-            else: #analysis entre 2 documentos
-                responseES = self.elasticsearhobj.searchBetweenDocs(paragraph_text, similarDocumentID)
             highlight_response = []
-
-            # Se evalua cada párrafo retornado
-            if(responseES['hits']['hits'] != []):
-                for highlight in responseES['hits']['hits'][0]['highlight']['content']:
-                    parag_text_clean = self.functions_plag_obj.getStringClean(paragraph_text)
-                    my_words = self.functions_plag_obj.getParagraphTokens(parag_text_clean)
-                    highlight_clean = self.functions_plag_obj.getStringClean(highlight)
-                    uncommon_words = list(self.functions_plag_obj.getUncommonWords(parag_text_clean,highlight_clean))
-                    common_words = list(self.functions_plag_obj.getCommonWords(parag_text_clean,highlight_clean))
-                    my_uncommon_words = self.functions_plag_obj.getHighlightPerformance(uncommon_words,parag_text_clean)
-
-                    res_highlight_data = {
-                        'content': highlight,
-                        #'levenshtein_distance': self.functions_plag_obj.getLevenshteinDistance(parag_text_clean, highlight_clean),
-                        #'similatiry_difflib': self.functions_plag_obj.getRatioSequenceMatcher(parag_text_clean, highlight_clean),
-                        'my_words': my_words,
-                        'common_words': common_words,
-                        'my_uncommon_words': my_uncommon_words,
-                        'phrase_similarity_percentage': self.functions_plag_obj.getPercentageSimilitud(my_words, common_words, my_uncommon_words)
-                    }
-                    highlight_response.append(res_highlight_data)
-
-                # Se arma la respuesta a entregar en API
-                res_es_data = {
-                    'paragraph_text': paragraph_text,
-                    'similarity_score': responseES['hits']['hits'][0]['_score'],
-                    'similarity_percentage': responseES['hits']['hits'][0]['_score'],
-                    'doc_': responseES['hits']['hits'][0]['_source'],
-                    'highlight': highlight_response,
-                    'status': 0
-                }
-                response_es.append(res_es_data)
-                similarDocuments.append(responseES['hits']['hits'][0]['_source']['id']) if responseES['hits']['hits'][0]['_source']['id'] not in similarDocuments else similarDocuments
-            else: #Por si no encuentra similitud en la frase
-                my_words = self.functions_plag_obj.getParagraphTokens(parag_text_clean)
+            #Se valida si la frase es una frase común
+            isCommonPhrase = self.commonPhrase_dao.existsCommonPhrase(paragraph_text, 1)
+            if(isCommonPhrase):
                 res_highlight_data = {
                     'content': '',
-                    'my_words': my_words,
+                    'my_words': [],
                     'common_words': [],
-                    'my_uncommon_words': my_words,
+                    'my_uncommon_words': [],
                     'phrase_similarity_percentage': 0
                 }
                 highlight_response.append(res_highlight_data)
@@ -124,9 +85,71 @@ class PlagiarismDetection(BaseController):
                     'similarity_percentage': 0,
                     'doc_': '',
                     'highlight': highlight_response,
-                    'status': 0 #Se podría fijar en 1 para que no lo tenga en cuenta, pero habría que tener en cuenta nuevamente el cálculo de similitud
+                    'status': -1 #MArcado como no válido 
                 }
                 response_es.append(res_es_data)
+            else:
+                # Se detecta similitud haciendo uso de ElasticSearh
+                if(analysisType != AnalysisType.EntreDocumentos): #analysis global
+                    if(documentId == ''):
+                        responseES = self.elasticsearhobj.searchByContent(paragraph_text)
+                    else:
+                        responseES = self.elasticsearhobj.searchByContentExcluyeDocID(paragraph_text, documentId)
+                else: #analysis entre 2 documentos
+                    responseES = self.elasticsearhobj.searchBetweenDocs(paragraph_text, similarDocumentID)
+
+                # Se evalua cada párrafo retornado
+                if(responseES['hits']['hits'] != []):
+                    for highlight in responseES['hits']['hits'][0]['highlight']['content']:
+                        parag_text_clean = self.functions_plag_obj.getStringClean(paragraph_text)
+                        my_words = self.functions_plag_obj.getParagraphTokens(parag_text_clean)
+                        highlight_clean = self.functions_plag_obj.getStringClean(highlight)
+                        uncommon_words = list(self.functions_plag_obj.getUncommonWords(parag_text_clean,highlight_clean))
+                        common_words = list(self.functions_plag_obj.getCommonWords(parag_text_clean,highlight_clean))
+                        my_uncommon_words = self.functions_plag_obj.getHighlightPerformance(uncommon_words,parag_text_clean)
+
+                        res_highlight_data = {
+                            'content': highlight,
+                            #'levenshtein_distance': self.functions_plag_obj.getLevenshteinDistance(parag_text_clean, highlight_clean),
+                            #'similatiry_difflib': self.functions_plag_obj.getRatioSequenceMatcher(parag_text_clean, highlight_clean),
+                            'my_words': my_words,
+                            'common_words': common_words,
+                            'my_uncommon_words': my_uncommon_words,
+                            'phrase_similarity_percentage': self.functions_plag_obj.getPercentageSimilitud(my_words, common_words, my_uncommon_words)
+                        }
+                        highlight_response.append(res_highlight_data)
+
+                    # Se arma la respuesta a entregar en API
+                    res_es_data = {
+                        'paragraph_text': paragraph_text,
+                        'similarity_score': responseES['hits']['hits'][0]['_score'],
+                        'similarity_percentage': responseES['hits']['hits'][0]['_score'],
+                        'doc_': responseES['hits']['hits'][0]['_source'],
+                        'highlight': highlight_response,
+                        'status': 0
+                    }
+                    response_es.append(res_es_data)
+                    similarDocuments.append(responseES['hits']['hits'][0]['_source']['id']) if responseES['hits']['hits'][0]['_source']['id'] not in similarDocuments else similarDocuments
+                else: #Por si no encuentra similitud en la frase
+                    my_words = self.functions_plag_obj.getParagraphTokens(parag_text_clean)
+                    res_highlight_data = {
+                        'content': '',
+                        'my_words': my_words,
+                        'common_words': [],
+                        'my_uncommon_words': my_words,
+                        'phrase_similarity_percentage': 0
+                    }
+                    highlight_response.append(res_highlight_data)
+                    # Se arma la respuesta a entregar en API
+                    res_es_data = {
+                        'paragraph_text': paragraph_text,
+                        'similarity_score': 0,
+                        'similarity_percentage': 0,
+                        'doc_': '',
+                        'highlight': highlight_response,
+                        'status': 0 #Se podría fijar en 1 para que no lo tenga en cuenta, pero habría que tener en cuenta nuevamente el cálculo de similitud
+                    }
+                    response_es.append(res_es_data)
                 
         #Se agregan los documentos similares
         plagiarismDetection = PlagiarismDetection()
@@ -140,7 +163,7 @@ class PlagiarismDetection(BaseController):
         super_res_data = {
             'response_elastic': response_es,
             'responsibleCode': getCurrentUser(),
-            'announcementCode': getCurrentAnnouncement(),
+            'announcementCode': announcementId,
             'documentID': documentId,
             'entityID': entityId,
             'AnalysisDate': datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
@@ -207,16 +230,20 @@ class PlagiarismDetection(BaseController):
             #Se crea el registro histórico de análisis
             analysisHistory = plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['id'], 0, AnalysisType.Global.value)
             #Status del documento a analizado
-            plagiarismDetection.plag_dao.updateStatus(data['id'], 1) 
+            if(data['status'] == 0):
+                plagiarismDetection.plag_dao.updateStatus(data['id'], 1) 
             #Se obtiene el entity_code
             announcement = plagiarismDetection.announcement_dao.get_announcement(doc['announcementCode'])
             #Se ejecuta el proceso de análsis de similitud
             response_analysis = plagiarismDetection.similarityAnalisis(doc['content'], AnalysisType.Global, 
-                documentId=data['id'], entityId=announcement['entity_code']) #fijar a doc['content']
+                documentId=data['id'], entityId=announcement['entity_code'], announcementId=doc['announcementCode'])
             #Status del histórico 
             collectionID = str(ObjectId(response_analysis["_id"]))
             plagiarismDetection.analyisHistory_dao.edit_analysisHistory(analysisHistory.id, 1, collectionID)
+            #Envío del email
+            plagiarismDetection.sendAlertObj.sendEmail()
         except:
+            plagiarismDetection.analyisHistory_dao.cleanAnalysisHistory()
             return jsonify(status_code=500, message='Error to analize document in Elastic!')
         return jsonify(status_code=200, success=True, message='Return info match', data=response_analysis)
 
@@ -240,12 +267,15 @@ class PlagiarismDetection(BaseController):
             #Se ejecuta el proceso de análsis de similitud
             response_analysis = plagiarismDetection.similarityAnalisis(doc['content'], AnalysisType.EntreDocumentos, 
                 similarDocumentID=data['similarDocumentCode'],  documentId=data['analysisDocumentCode'], 
-                entityId=announcement['entity_code']) #fijar a doc['content']
+                entityId=announcement['entity_code'], announcementId=doc['announcementCode'])
 
             #Status del histórico 
             collectionID = str(ObjectId(response_analysis["_id"]))
             plagiarismDetection.analyisHistory_dao.edit_analysisHistory(analysisHistory.id, 1, collectionID)
+            #Envío del email
+            plagiarismDetection.sendAlertObj.sendEmail()
         except:
+            plagiarismDetection.analyisHistory_dao.cleanAnalysisHistory()
             return jsonify(status_code=500, message='Error to index document in Elastic!')
 
         return jsonify(status_code=200, success=True, message='Return info match', data=response_analysis)
@@ -256,12 +286,20 @@ class PlagiarismDetection(BaseController):
             print("inicio")
             plagiarismDetection = PlagiarismDetection()
             data = request.get_json()
+            
+            #Status del similar documento a analizado
+            print(data)
+            #Status del documento a analizado
+            if(data['status'] == 0):
+                plagiarismDetection.plag_dao.updateStatus(data['id'], 1) 
             plagiarismDetection.analyisHistory_dao.create_analysisHistory(data['id'], 0, AnalysisType.Global.value)
             announcement = plagiarismDetection.announcement_dao.get_announcement(data['announcementCode'])
+            plagiarismDetection.sendAlertObj.sendEmail()
             import time
-            time.sleep(20)
+            time.sleep(5)
             print("termino")
         except:
+            plagiarismDetection.analyisHistory_dao.cleanAnalysisHistory()
             return jsonify(status_code=500, message='Error to index document in Elastic!')
         return jsonify(status_code=200, success=True, message='Return info match', data="response_analysis")
 

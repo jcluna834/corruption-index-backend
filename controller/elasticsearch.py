@@ -9,6 +9,7 @@ from elasticapm.contrib.starlette import ElasticAPM, make_apm_client
 from controller.base import BaseController
 from fastapi.encoders import jsonable_encoder
 from util.injector import inject
+from settings import config
 
 
 class ElasticSearchFunction(BaseController):
@@ -32,6 +33,7 @@ class ElasticSearchFunction(BaseController):
 
     # Realiza una búsqueda por contenido y excluyendo el actualdocument retornando el primer elemento de la misma
     def searchByContentExcluyeDocID(self, query, documentID):
+        frag_size = round(len(query) *config['PERCENTAGE_TEXT']) + len(query)
         return self.es.search(
             index="documentos",
             body={
@@ -62,7 +64,7 @@ class ElasticSearchFunction(BaseController):
                     "post_tags": [""],
                     "fields": {
                         "content": {
-                            "fragment_size": 500,
+                            "fragment_size": frag_size,
                             "number_of_fragments": 1,
                             "order": "score"
                         }
@@ -72,7 +74,8 @@ class ElasticSearchFunction(BaseController):
         )
 
     # Realiza una búsqueda por contenido retornando el primer elemento de la misma
-    def searchByContent_(self, query):
+    def searchByContent(self, query):
+        frag_size = round(len(query) *config['PERCENTAGE_TEXT']) + len(query)
         return self.es.search(
             index="documentos",
             body={
@@ -88,7 +91,7 @@ class ElasticSearchFunction(BaseController):
                     "post_tags": [""],
                     "fields": {
                         "content": {
-                            "fragment_size": 500,
+                            "fragment_size": frag_size,
                             "number_of_fragments": 1,
                             "order": "score"
                         }
@@ -99,6 +102,7 @@ class ElasticSearchFunction(BaseController):
 
     # Realiza una búsqueda por contenido retornando elrimer elemento de la misma
     def searchBetweenDocs(self, query, similarDocumentID): #TODO - garantizar la búsqueda solo con 1 doc
+        frag_size = round(len(query) *config['PERCENTAGE_TEXT']) + len(query)
         return self.es.search(
             index="documentos",
             body={
@@ -128,7 +132,7 @@ class ElasticSearchFunction(BaseController):
                     "post_tags": [""],
                     "fields": {
                         "content": {
-                            "fragment_size": 500,
+                            "fragment_size": frag_size,
                             "number_of_fragments": 1,
                             "order": "score"
                         }

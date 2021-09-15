@@ -22,7 +22,7 @@ class AnalysisHistory(BaseController):
         :return:
         """
         res = self.analyisHistory_dao.get_analysisHistory_info(page=int(request.args.get("page", 1)),
-                                     per_page=int(request.args.get("per_page", 10)), all='all' in request.args)
+                                    per_page=int(request.args.get("per_page", 10)), all='all' in request.args)
         docs_info = dict(data=[d for d in res['data']], count=res['count'])
         return Response(data=docs_info)
 
@@ -31,3 +31,7 @@ class AnalysisHistory(BaseController):
         analysisHistoryController = AnalysisHistory()
         analysisHistory = analysisHistoryController.analyisHistory_dao.analysisHistoryByCollectionCode(collectionID)
         return jsonify(status_code=201, message='Reports returned successfully!', data=analysisHistory)
+
+    def cleanAnalysisHistory():
+        analysisHistoryController = AnalysisHistory()
+        analysisHistoryController.analyisHistory_dao.cleanAnalysisHistory()

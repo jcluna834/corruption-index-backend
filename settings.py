@@ -37,6 +37,10 @@ class __Config__(object):
     USERAUTHID = 1
     ANNOUNCEMENTID = 1
     ENTITYID = 1
+    PERCENTAGE_TEXT = 0.5
+    EMAIL_USERNAME = 'jcluna@unicauca.edu.co'
+    EMAIL_PASS = 'america1927834'
+    EMAIL_ADDRESS = 'jcluna834@gmail.com'
 
 
 app.config.from_object(__Config__)
