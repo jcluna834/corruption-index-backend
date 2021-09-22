@@ -7,6 +7,7 @@ from math import ceil
 from settings import config
 from sqlalchemy.sql import text
 from sqlalchemy.sql.expression import bindparam
+from sqlalchemy import or_
 
 class SimilarDocumentDAO(BaseService):
 
@@ -24,7 +25,7 @@ class SimilarDocumentDAO(BaseService):
             "left join documents d on sd.similarDocumentCode = d.id "
             "left join announcement a on d.announcementCode = a.id "
             "left join analysishistory ah on sd.similarDocumentCode = ah.similarDocumentCode and ah.documentCode = :analysisDocumentCode "
-            "where sd.analysisDocumentCode = :analysisDocumentCode").\
+            "where sd.status<>-1 and sd.analysisDocumentCode = :analysisDocumentCode").\
             bindparams(analysisDocumentCode=analysisDocumentID)
         
         records = self.db.session.execute(stmt).fetchall()
@@ -70,3 +71,16 @@ class SimilarDocumentDAO(BaseService):
         document.status = status
         self.db.session.commit()
         return document
+    
+    def deleteDocument(self, id):
+        """
+        Update an document.
+        :param data: document's properties as json.
+        :return:
+        """
+        #documents =self.db.session.query(SimilarDocument).filter(or_(analysisDocumentCode=id, similarDocumentCode=id)).all()
+        documents = SimilarDocument.query.filter( (SimilarDocument.analysisDocumentCode==id) | (SimilarDocument.similarDocumentCode==id)).all()
+        for document in documents:
+            document.status = -1
+            self.db.session.commit()
+        return documents

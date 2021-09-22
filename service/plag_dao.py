@@ -168,6 +168,17 @@ class PlagiarismDAO(BaseService):
         self.db.session.commit()
         return document
 
+    def deleteDocument(self, id):
+        """
+        Update an document.
+        :param data: document's properties as json.
+        :return:
+        """
+        document = Document.query.filter_by(id=id).first()
+        document.is_deleted = 1
+        self.db.session.commit()
+        return document
+
     def updateStatus(self, id, status):
         """
         Update an document.

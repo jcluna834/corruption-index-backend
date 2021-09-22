@@ -54,11 +54,10 @@ class Announcement(BaseController):
         :return:
         """
         res = self.announcement_dao.get_announcements(page=int(request.args.get("page", 1)),
-                                     per_page=int(request.args.get("per_page", 10)), all='all' in request.args)
+                                    per_page=int(request.args.get("per_page", 10)), all='all' in request.args)
         docs_info = dict(data=[d.to_dict() for d in res['data']], count=res['count'])
         return Response(data=docs_info)
 
-    
     @intercept()
     def delete(self, *args, **kwargs):
         try:

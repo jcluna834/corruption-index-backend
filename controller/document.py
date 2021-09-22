@@ -6,6 +6,8 @@ from util.response import intercept, Response
 from controller.base import BaseController
 from util.injector import inject
 from service.plag_dao import PlagiarismDAO
+from service.similarDocument_dao import SimilarDocumentDAO
+from service.analysisHistory_dao import AnalysisHistoryDAO
 from util.constants.error_codes import HttpErrorCode
 from util.error_handlers.exceptions import ExceptionBuilder, BadRequest
 from controller import elasticsearch
@@ -59,6 +61,8 @@ def convert_pdf_to_txt_2(path):
 
 class Document(BaseController):
     plag_dao: PlagiarismDAO = inject(PlagiarismDAO)
+    similarDocDao: SimilarDocumentDAO = inject(SimilarDocumentDAO)
+    analysisHistoryDao: AnalysisHistoryDAO = inject(AnalysisHistoryDAO)
     elasticsearhobj = elasticsearch.ElasticSearchFunction()
 
     def __init__(self):
@@ -118,6 +122,23 @@ class Document(BaseController):
         """Adds a new document to repo"""
         data = request.get_json(force=True)
         return self.saveDocument(data, "update")
+
+    
+    @intercept()
+    def delete(self, *args, **kwargs):
+        try:
+            id = request.get_json()
+            #Marcar como eliminado el documento
+            self.plag_dao.deleteDocument(id)
+            #Marcar como eliminado el registro del documento similar
+            self.similarDocDao.deleteDocument(id)
+            #Marcar loas análsisi como eliminados
+            self.analysisHistoryDao.deleteAnalysis(id)
+            #Eliminar el documento del índice
+            self.elasticsearhobj.delete_by_query(id)
+        except:
+            return Response(status_code=500, message='Error to delete Document!')
+        return Response(status_code=201, message='Document deleted successfully!')
     
     @app.route("/api/v1/plagiarism/uploadFile", methods=['GET','POST'])
     def upload_file():

@@ -173,3 +173,16 @@ class AnalysisHistoryDAO(BaseService):
         self.db.session.commit()
         '''self.db.session.query(AnalysisHistory).filter(AnalysisHistory.status==0).delete()
         self.db.session.commit()'''
+
+
+    def deleteAnalysis(self, id):
+        """
+        Update an document.
+        :param data: document's properties as json.
+        :return:
+        """
+        documents = AnalysisHistory.query.filter_by(documentCode=id).all()
+        for document in documents:
+            document.is_deleted = 1
+            self.db.session.commit()
+        return documents

@@ -147,6 +147,12 @@ class ElasticSearchFunction(BaseController):
             index="documentos", body={"query": {"multi_match": {"query": query}}}
         )
 
+    # Eliminar un doc por id del doc de BD
+    def delete_by_query(self, id):
+        return self.es.delete_by_query(
+            index="documentos", body={"query": {"match": {"id": id}}}
+        )
+
     # Elimina todos los documentos asociados a un index
     async def delete(self):
         return await self.es.delete_by_query(index="documentos", body={"query": {"match_all": {}}})
