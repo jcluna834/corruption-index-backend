@@ -16,6 +16,7 @@ class Document(BaseModel):
     responsibleCode = db.Column('responsibleCode', db.Integer, nullable=False)
     announcementCode = db.Column('announcementCode', db.Integer, nullable=False)
     status = db.Column('status', db.Integer, nullable=False)
+    documentType = db.Column('documentType', db.Integer, nullable=False)
 
     # Table metadata can be specified as follows -
     __table_args__ = (
@@ -36,7 +37,8 @@ class Document(BaseModel):
             'description': self.description,
             'content': self.content,
             'fileName': self.fileName,
-            'announcementCode': self.announcementCode
+            'announcementCode': self.announcementCode,
+            'documentType': self.documentType
         }
 
     def to_dict_es(self, *args, **kwargs):
@@ -48,5 +50,6 @@ class Document(BaseModel):
             'content': self.content,
             'responsibleCode': self.responsibleCode,
             'announcementCode': self.announcementCode,
-            'is_deleted': self.is_deleted
+            'is_deleted': self.is_deleted,
+            'documentType': self.documentType
         }

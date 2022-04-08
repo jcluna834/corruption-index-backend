@@ -58,7 +58,7 @@ class PlagiarismDAO(BaseService):
 
         stmt = text("select d.id as documentId, d.title, d.description as documentDescription, a.id as announcementCode, a.name as announcementName, d.fileName, d.status "
             "from documents d join announcement a on d.announcementCode = a.id "
-            "where d.is_deleted = 0 and a.is_deleted = 0 and d.responsibleCode = :codeUser and a.responsible_code = :codeUser "
+            "where d.is_deleted = 0 and a.is_deleted = 0 and d.documentType = 1 and d.responsibleCode = :codeUser and a.responsible_code = :codeUser "
             "order by d.title ").\
             bindparams(codeUser=config['USERAUTHID'])
             
@@ -139,7 +139,7 @@ class PlagiarismDAO(BaseService):
             "count": count
         }
 
-    def create_doc(self, content, title, fileName, description='', responsibleCode='', announcementCode=''):
+    def create_doc(self, content, title, fileName, description='', responsibleCode='', announcementCode='', documentType=1):
         """
         Creates an document.
         :param data: document's properties as json.
@@ -148,7 +148,7 @@ class PlagiarismDAO(BaseService):
         doc = Document(content=content, title=title, 
             description=description, 
             responsibleCode=responsibleCode, announcementCode=announcementCode, 
-            fileName=fileName, status=0)
+            fileName=fileName, status=0, documentType=documentType)
         
         self.db.session.add(doc)
         self.db.session.commit()

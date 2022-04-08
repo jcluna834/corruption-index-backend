@@ -76,12 +76,13 @@ class Document(BaseController):
         responsibleCode = data.get('responsibleCode', '')
         announcementCode = data.get('announcementCode', '')
         indexDoc = data.get('indexDoc', '')
+        documentType = data.get('documentType', '')
         if title:
             # Se agrega el documento en la BD
             if (option == "save"):
                 if content:
                     # Se agrega el documento en la BD
-                    doc = self.plag_dao.create_doc(content, title, fileName, description=description, responsibleCode=responsibleCode, announcementCode=announcementCode)
+                    doc = self.plag_dao.create_doc(content, title, fileName, description=description, responsibleCode=responsibleCode, announcementCode=announcementCode, documentType=documentType)
                     # Se agrega el documento al índice en elasticsearh
                     if indexDoc == 1:
                         self.elasticsearhobj.add(doc.to_dict_es())
@@ -157,9 +158,16 @@ class Document(BaseController):
                 #fhandle = open(os.path.join(config['UPLOAD_FOLDER'], filename), 'rb')
                 content_pdf = convert_pdf_to_txt(os.path.join(config['UPLOAD_FOLDER'], filename))
                 #TODO -- Obtener el responsibleCode y announcementCode
-                data =  {'content':content_pdf, 'title':request.form.get("title"), 'description':request.form.get("description"), 'fileName':filename,
+                data =  {
+                    'content':content_pdf, 
+                    'title':request.form.get("title"), 
+                    'description':request.form.get("description"), 
+                    'fileName':filename,
                     'indexDoc':request.form.get("indexDoc"),
-                    'responsibleCode':request.form.get("responsibleCode"), 'announcementCode':request.form.get("announcementCode")}
+                    'responsibleCode':request.form.get("responsibleCode"), 
+                    'announcementCode':request.form.get("announcementCode"),
+                    'documentType':request.form.get("documentType")
+                }
                 try:
                     doc = Document()
                     doc.saveDocument(data, "save")
