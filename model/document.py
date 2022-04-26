@@ -53,3 +53,15 @@ class Document(BaseModel):
             'is_deleted': self.is_deleted,
             'documentType': self.documentType
         }
+
+    def to_dict_elastic(self, *args, **kwargs):
+        return {
+            'id': self.id,
+            'created_date': self.created_date,
+            'title': self.title,
+            'description': self.description,
+            'content': self.content,
+            'responsibleCode': self.responsibleCode,
+            'announcementCode': self.announcementCode,
+            'is_deleted': self.is_deleted
+        }

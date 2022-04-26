@@ -107,7 +107,7 @@ class PlagiarismDAO(BaseService):
         query = {'is_deleted': 0, 'id':documentId}
         doc_queryset = Document.query.filter_by(**query)
         docs = doc_queryset.one()
-        return docs.to_dict_es()
+        return docs.to_dict_elastic()
 
     def get_doc_info(self, documentId):
         """
@@ -148,7 +148,7 @@ class PlagiarismDAO(BaseService):
         doc = Document(content=content, title=title, 
             description=description, 
             responsibleCode=responsibleCode, announcementCode=announcementCode, 
-            fileName=fileName, status=0, documentType=documentType)
+            fileName=fileName, status=1, documentType=documentType)
         
         self.db.session.add(doc)
         self.db.session.commit()

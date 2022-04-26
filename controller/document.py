@@ -85,7 +85,7 @@ class Document(BaseController):
                     doc = self.plag_dao.create_doc(content, title, fileName, description=description, responsibleCode=responsibleCode, announcementCode=announcementCode, documentType=documentType)
                     # Se agrega el documento al índice en elasticsearh
                     if indexDoc == 1:
-                        self.elasticsearhobj.add(doc.to_dict_es())
+                        self.elasticsearhobj.add(doc.to_dict_elastic())
                     message='Document added successfully!'
                 else:
                     ExceptionBuilder(BadRequest).error(HttpErrorCode.REQUIRED_FIELD, 'content').throw()

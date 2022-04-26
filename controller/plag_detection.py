@@ -315,3 +315,9 @@ class PlagiarismDetection(BaseController):
         )
         list_cur = list(responseCollection)
         return jsonify(status_code=201, message='Report modify successfully!', data=list_cur)
+
+    @app.route("/api/v1/plagiarism/sendMail", methods=['POST'])
+    def sendMail():
+        plagiarismDetection = PlagiarismDetection()
+        plagiarismDetection.sendAlertObj.sendEmail()
+        return jsonify(status_code=201, message='Mail sended successfully!')

@@ -3,18 +3,14 @@ import datetime
 __author__ = "Julio Luna"
 __email__ = "jcluna@unicauca.edu.co"
 
-from elasticsearch import AsyncElasticsearch, NotFoundError, Elasticsearch
-from elasticsearch.helpers import async_streaming_bulk
-from elasticapm.contrib.starlette import ElasticAPM, make_apm_client
+from elasticsearch import NotFoundError, Elasticsearch
 from controller.base import BaseController
 from fastapi.encoders import jsonable_encoder
-from util.injector import inject
 from settings import config
 
-
 class ElasticSearchFunction(BaseController):
-    es = Elasticsearch()
-
+    es = Elasticsearch(hosts="http://localhost:9200/")
+    
     # Retorna todos los documentos asociados a un índice
     async def searchAll(self):
         return await self.es.search(index="documentos", body={"query": {"match_all": {}}})
