@@ -309,7 +309,7 @@ class PlagiarismDetection(BaseController):
         db = client.get_database(__collection__)
         collection = db.PlagiarismDetection
         responseCollection = collection.find({"_id":ObjectId(data['id'])})
-        collection.update(
+        collection.update_one(
             { "_id":ObjectId(data['id']), "response_elastic.paragraph_text":data['text'] },
             { "$set": { 'response_elastic.$.status' : -1}}
         )
